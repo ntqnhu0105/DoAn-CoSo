@@ -207,8 +207,16 @@ const budgetSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
+budgetSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 // Schema cho Báo Cáo (BaoCao)
 const reportSchema = new mongoose.Schema({
   maNguoiDung: {

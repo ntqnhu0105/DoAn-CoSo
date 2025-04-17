@@ -11,14 +11,18 @@ router.post('/', async (req, res) => {
     console.log('Received transaction payload:', req.body);
     const { maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai, ghiChu, phuongThucThanhToan } = req.body;
 
-    // Kiểm tra dữ liệu đầu vào
     if (!maNguoiDung || !maTaiKhoan || !maDanhMuc || !soTien || !loai) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai' });
     }
 
-    // Kiểm tra người dùng
+    if (soTien <= 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Số tiền phải lớn hơn 0' });
+    }
+
     const user = await User.findById(maNguoiDung).session(session);
     if (!user) {
       await session.abortTransaction();
@@ -26,15 +30,13 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ message: 'Người dùng không tồn tại' });
     }
 
-    // Kiểm tra tài khoản
     const account = await Account.findById(maTaiKhoan).session(session);
-    if (!account) {
+    if (!account || account.maNguoiDung.toString() !== maNguoiDung) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).json({ message: 'Tài khoản không tồn tại' });
+      return res.status(404).json({ message: 'Tài khoản không tồn tại hoặc không thuộc về bạn' });
     }
 
-    // Kiểm tra danh mục
     const category = await Category.findById(maDanhMuc).session(session);
     if (!category) {
       await session.abortTransaction();
@@ -42,7 +44,6 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ message: 'Danh mục không tồn tại' });
     }
 
-    // Cập nhật số dư tài khoản
     if (loai === 'Chi tiêu') {
       if (account.soDu < soTien) {
         await session.abortTransaction();
@@ -58,10 +59,8 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Loại giao dịch không hợp lệ' });
     }
 
-    // Lưu tài khoản
     await account.save({ session });
 
-    // Tạo giao dịch
     const transaction = new Transaction({
       maNguoiDung,
       maTaiKhoan,
@@ -74,7 +73,6 @@ router.post('/', async (req, res) => {
 
     await transaction.save({ session });
 
-    // Commit transaction
     await session.commitTransaction();
     session.endSession();
 
@@ -85,7 +83,7 @@ router.post('/', async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     console.error('Create transaction error:', error);
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
+    res.status(500).json({ message: 'Lỗi server khi tạo giao dịch', error: error.message });
   }
 });
 
@@ -95,7 +93,7 @@ router.put('/:id', async (req, res) => {
   session.startTransaction();
   try {
     const { id } = req.params;
-    const { maTaiKhoan, maDanhMuc, soTien, loai, ghiChu, phuongThucThanhToan } = req.body;
+    const { maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai, ghiChu, phuongThucThanhToan } = req.body;
 
     // Kiểm tra giao dịch hiện tại
     const transaction = await Transaction.findById(id).session(session);
@@ -105,12 +103,35 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Giao dịch không tồn tại' });
     }
 
-    // Kiểm tra tài khoản mới (nếu thay đổi)
-    const newAccount = maTaiKhoan ? await Account.findById(maTaiKhoan).session(session) : null;
-    if (maTaiKhoan && !newAccount) {
+    // Kiểm tra quyền sở hữu
+    if (transaction.maNguoiDung.toString() !== maNguoiDung) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).json({ message: 'Tài khoản không tồn tại' });
+      return res.status(403).json({ message: 'Bạn không có quyền sửa giao dịch này' });
+    }
+
+    // Kiểm tra người dùng
+    const user = await User.findById(maNguoiDung).session(session);
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: 'Người dùng không tồn tại' });
+    }
+
+    // Kiểm tra số tiền
+    const newSoTien = soTien || transaction.soTien;
+    if (newSoTien <= 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Số tiền phải lớn hơn 0' });
+    }
+
+    // Kiểm tra tài khoản mới (nếu thay đổi)
+    const newAccount = maTaiKhoan ? await Account.findById(maTaiKhoan).session(session) : null;
+    if (maTaiKhoan && (!newAccount || newAccount.maNguoiDung.toString() !== maNguoiDung)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: 'Tài khoản không tồn tại hoặc không thuộc về bạn' });
     }
 
     // Kiểm tra danh mục mới (nếu thay đổi)
@@ -138,16 +159,19 @@ router.put('/:id', async (req, res) => {
     // Cập nhật số dư tài khoản mới
     const targetAccount = newAccount || oldAccount;
     const newLoai = loai || transaction.loai;
-    const newSoTien = soTien || transaction.soTien;
     if (newLoai === 'Chi tiêu') {
       if (targetAccount.soDu < newSoTien) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(400).json({ message: 'Số dư tài khoản không đủ' });
+        return res.status(400).json({ message: 'Số dư tài khoản không đủ để thực hiện chi tiêu' });
       }
       targetAccount.soDu -= newSoTien;
     } else if (newLoai === 'Thu nhập') {
       targetAccount.soDu += newSoTien;
+    } else {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Loại giao dịch không hợp lệ' });
     }
     await targetAccount.save({ session });
 
@@ -161,7 +185,6 @@ router.put('/:id', async (req, res) => {
 
     await transaction.save({ session });
 
-    // Commit transaction
     await session.commitTransaction();
     session.endSession();
 
@@ -172,7 +195,7 @@ router.put('/:id', async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     console.error('Update transaction error:', error);
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
+    res.status(500).json({ message: 'Lỗi server khi cập nhật giao dịch', error: error.message });
   }
 });
 
@@ -183,7 +206,6 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Kiểm tra giao dịch
     const transaction = await Transaction.findById(id).session(session);
     if (!transaction) {
       await session.abortTransaction();
@@ -191,7 +213,6 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Giao dịch không tồn tại' });
     }
 
-    // Hoàn tác số dư tài khoản
     const account = await Account.findById(transaction.maTaiKhoan).session(session);
     if (!account) {
       await session.abortTransaction();
@@ -205,10 +226,8 @@ router.delete('/:id', async (req, res) => {
     }
     await account.save({ session });
 
-    // Xóa giao dịch
     await transaction.deleteOne({ session });
 
-    // Commit transaction
     await session.commitTransaction();
     session.endSession();
 
@@ -219,7 +238,7 @@ router.delete('/:id', async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     console.error('Delete transaction error:', error);
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
+    res.status(500).json({ message: 'Lỗi server khi xóa giao dịch', error: error.message });
   }
 });
 
@@ -237,7 +256,7 @@ router.get('/:userId', async (req, res) => {
     res.json(transactions);
   } catch (error) {
     console.error('Get transactions error:', error);
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
+    res.status(500).json({ message: 'Lỗi server khi lấy danh sách giao dịch', error: error.message });
   }
 });
 
