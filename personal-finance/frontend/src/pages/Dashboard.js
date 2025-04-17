@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Dashboard = () => {
   const [transactions, setTransactions] = useState([]);
@@ -54,6 +56,7 @@ const Dashboard = () => {
     } catch (err) {
       console.error('Fetch data error:', err);
       setError(err.response?.data?.message || 'Lỗi khi tải dữ liệu');
+      toast.error(err.response?.data?.message || 'Lỗi khi tải dữ liệu');
     } finally {
       setLoading(false);
     }
@@ -67,10 +70,14 @@ const Dashboard = () => {
   // Thêm hoặc sửa giao dịch
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted, button disabled:', !maTaiKhoan || !maDanhMuc || !soTien);
-    console.log('Submitting transaction with:', { maTaiKhoan, maDanhMuc, soTien });
     if (!maTaiKhoan || !maDanhMuc || !soTien) {
       setError('Vui lòng nhập số tiền và chọn tài khoản, danh mục');
+      toast.error('Vui lòng nhập số tiền và chọn tài khoản, danh mục');
+      return;
+    }
+    if (parseFloat(soTien) <= 0) {
+      setError('Số tiền phải lớn hơn 0');
+      toast.error('Số tiền phải lớn hơn 0');
       return;
     }
     try {
@@ -90,9 +97,11 @@ const Dashboard = () => {
         setTransactions(
           transactions.map((t) => (t._id === editingTransaction._id ? res.data : t))
         );
+        toast.success('Sửa giao dịch thành công!');
       } else {
         res = await axios.post(`${process.env.REACT_APP_API_URL}/transactions`, payload);
         setTransactions([...transactions, res.data]);
+        toast.success('Thêm giao dịch thành công!');
       }
       console.log('Response:', res.data);
 
@@ -108,7 +117,9 @@ const Dashboard = () => {
       setEditingTransaction(null);
     } catch (err) {
       console.error('Request error:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'Lỗi khi xử lý giao dịch');
+      const errorMessage = err.response?.data?.message || 'Lỗi khi xử lý giao dịch';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -129,19 +140,20 @@ const Dashboard = () => {
     try {
       await axios.delete(`${process.env.REACT_APP_API_URL}/transactions/${id}`);
       setTransactions(transactions.filter((t) => t._id !== id));
-
-      // Cập nhật lại tài khoản và danh mục
       await fetchData();
-
       setError('');
+      toast.success('Xóa giao dịch thành công!');
     } catch (err) {
       console.error('Delete error:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'Lỗi khi xóa giao dịch');
+      const errorMessage = err.response?.data?.message || 'Lỗi khi xóa giao dịch';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
+      <ToastContainer />
       <div className="max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold mb-6 text-center">Quản lý chi tiêu</h2>
         {error && <p className="text-red-500 mb-4" dangerouslySetInnerHTML={{ __html: error }} />}
@@ -178,6 +190,7 @@ const Dashboard = () => {
                   className="w-full p-2 border rounded"
                   required
                   step="0.01"
+                  min="0.01"
                 />
               </div>
               <div>
@@ -205,7 +218,7 @@ const Dashboard = () => {
                   ) : (
                     accounts.map((acc) => (
                       <option key={acc._id} value={acc._id}>
-                        {acc.tenTaiKhoan} ({acc.loaiTaiKhoan})
+                        {acc.tenTaiKhoan} ({acc.loaiTaiKhoan}) - {acc.soDu.toLocaleString()} VNĐ
                       </option>
                     ))
                   )}
@@ -259,7 +272,7 @@ const Dashboard = () => {
                 <button
                   type="submit"
                   className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
-                  disabled={!maTaiKhoan || !maDanhMuc || !soTien}
+                  disabled={!maTaiKhoan || !maDanhMuc || !soTien || parseFloat(soTien) <= 0}
                 >
                   {editingTransaction ? 'Lưu thay đổi' : 'Thêm giao dịch'}
                 </button>
@@ -299,7 +312,7 @@ const Dashboard = () => {
                     <span className="font-medium">{transaction.loai}</span>: {transaction.soTien.toLocaleString()} VNĐ
                     <br />
                     <span className="text-gray-600">
-                      Tài khoản: {transaction.maTaiKhoan?.tenTaiKhoan || 'Không xác định'}<br />
+                      Tài khoản: {transaction.maTaiKhoan?.tenTaiKhoan || 'Không xác định'} ({transaction.maTaiKhoan?.soDu?.toLocaleString() || '0'} VNĐ)<br />
                       Danh mục: {transaction.maDanhMuc?.tenDanhMuc || 'Không xác định'}<br />
                       Phương thức: {transaction.phuongThucThanhToan || 'Không có'}<br />
                       Ghi chú: {transaction.ghiChu || 'Không có ghi chú'}<br />

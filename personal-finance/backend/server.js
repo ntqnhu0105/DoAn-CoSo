@@ -18,7 +18,8 @@ mongoose.connect(process.env.MONGO_URI, {
 })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
-
+const updateBudgetStatus = require('./cron/updateBudgetStatus');
+  updateBudgetStatus();
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/transactions', require('./routes/transactionRoutes'));
