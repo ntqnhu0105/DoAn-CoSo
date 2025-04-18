@@ -314,9 +314,19 @@ const debtSchema = new mongoose.Schema({
     required: [true, 'Số tiền là bắt buộc'],
     min: [0, 'Số tiền không được âm'],
   },
+  soTienDaTra: {
+    type: Number,
+    default: 0,
+    min: [0, 'Số tiền đã trả không được âm'],
+  },
   laiSuat: {
     type: Number,
     min: [0, 'Lãi suất không được âm'],
+  },
+  kyHan: {
+    type: Number,
+    required: [true, 'Kì hạn là bắt buộc'],
+    min: [1, 'Kì hạn phải lớn hơn 0'],
   },
   ngayBatDau: {
     type: Date,
@@ -338,8 +348,19 @@ const debtSchema = new mongoose.Schema({
   ngayTraTiepTheo: {
     type: Date,
   },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
-
+debtSchema.pre('save', function (next) {
+  this.updatedAt = new Date();
+  next();
+});
 // Schema cho Thông Báo (ThongBao)
 const notificationSchema = new mongoose.Schema({
   maNguoiDung: {
@@ -386,6 +407,10 @@ const investmentSchema = new mongoose.Schema({
     required: [true, 'Giá trị đầu tư là bắt buộc'],
     min: [0, 'Giá trị đầu tư không được âm'],
   },
+  loiNhuan: {
+    type: Number,
+    default: 0, 
+  },
   ngay: {
     type: Date,
     default: Date.now,
@@ -400,7 +425,9 @@ const investmentSchema = new mongoose.Schema({
     enum: ['Hoạt động', 'Đã bán', 'Đang chờ'],
     default: 'Hoạt động',
   },
-});
+},
+  { timestamps: true }
+);
 
 // Tạo các chỉ số (Index)
 transactionSchema.index({ maNguoiDung: 1, ngayGiaoDich: 1 });
