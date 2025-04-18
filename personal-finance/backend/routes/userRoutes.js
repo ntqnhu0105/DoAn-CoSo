@@ -19,13 +19,16 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Tên đăng nhập hoặc email đã tồn tại' });
     }
 
+    // Mã hóa mật khẩu
+    const hashedPassword = await bcrypt.hash(matKhau, 10);
+
     // Tạo người dùng mới
-    const user = new User({ tenDangNhap, matKhau, email, hoTen });
+    const user = new User({ tenDangNhap, matKhau: hashedPassword, email, hoTen });
     await user.save();
 
     res.status(201).json({ message: 'Đăng ký thành công', user: { tenDangNhap, email, hoTen } });
   } catch (error) {
-    console.error('Register error:', error); // Ghi log lỗi ra console
+    console.error('Register error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });
@@ -54,7 +57,7 @@ router.post('/login', async (req, res) => {
 
     res.json({ message: 'Đăng nhập thành công', userId: user._id });
   } catch (error) {
-    console.error('Login error:', error); // Ghi log lỗi ra console
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });
