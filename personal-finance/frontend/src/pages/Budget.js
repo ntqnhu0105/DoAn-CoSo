@@ -19,14 +19,12 @@ const Budget = () => {
   const userId = localStorage.getItem('userId');
   const navigate = useNavigate();
 
-  // Kiểm tra userId
   useEffect(() => {
     if (!userId) {
       navigate('/');
     }
   }, [userId, navigate]);
 
-  // Lấy danh sách ngân sách và danh mục
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -44,12 +42,15 @@ const Budget = () => {
           setError('Vui lòng tạo danh mục tại <a href="/categories" class="text-blue-500 underline">Quản lý danh mục</a>.');
           toast.error('Chưa có danh mục, vui lòng tạo danh mục trước.');
         }
-        // Thông báo ngân sách vừa kết thúc (trong 24 giờ qua)
         const recentlyEnded = newBudgets.filter(
           (bud) => !bud.trangThai && new Date(bud.updatedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000)
         );
         recentlyEnded.forEach((bud) => {
-          toast.info(`Ngân sách "${bud.maDanhMuc.tenDanhMuc}" đã kết thúc vào ${new Date(bud.ngayKetThuc).toLocaleDateString()}`);
+          if (bud.maDanhMuc?.tenDanhMuc) {
+            toast.info(`Ngân sách "${bud.maDanhMuc.tenDanhMuc}" đã kết thúc vào ${new Date(bud.ngayKetThuc).toLocaleDateString()}`, {
+              toastId: `budget-${bud._id}`,
+            });
+          }
         });
       } catch (err) {
         const errorMessage = err.response?.data?.message || 'Lỗi khi tải dữ liệu';
@@ -62,7 +63,6 @@ const Budget = () => {
     if (userId) fetchData();
   }, [userId]);
 
-  // Thêm hoặc cập nhật ngân sách
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!maDanhMuc || !soTien || !ngayBatDau || !ngayKetThuc) {
@@ -70,13 +70,19 @@ const Budget = () => {
       toast.error('Vui lòng nhập đầy đủ thông tin');
       return;
     }
-    if (parseFloat(soTien) <= 0) {
-      setError('Số tiền phải lớn hơn 0');
-      toast.error('Số tiền phải lớn hơn 0');
+    const soTienNum = parseFloat(soTien);
+    if (isNaN(soTienNum) || soTienNum <= 0) {
+      setError('Số tiền phải là số dương hợp lệ');
+      toast.error('Số tiền phải là số dương hợp lệ');
       return;
     }
     const startDate = new Date(ngayBatDau);
     const endDate = new Date(ngayKetThuc);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      setError('Ngày bắt đầu và ngày kết thúc phải hợp lệ');
+      toast.error('Ngày bắt đầu và ngày kết thúc phải hợp lệ');
+      return;
+    }
     if (endDate < startDate) {
       setError('Ngày kết thúc phải sau ngày bắt đầu');
       toast.error('Ngày kết thúc phải sau ngày bắt đầu');
@@ -87,7 +93,7 @@ const Budget = () => {
       const payload = {
         userId,
         maDanhMuc,
-        soTien: parseFloat(soTien),
+        soTien: soTienNum,
         ngayBatDau,
         ngayKetThuc,
         ghiChu,
@@ -118,7 +124,6 @@ const Budget = () => {
     }
   };
 
-  // Xóa ngân sách
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa ngân sách này?')) return;
     try {
@@ -132,18 +137,17 @@ const Budget = () => {
     }
   };
 
-  // Chọn ngân sách để sửa
   const handleEdit = (budget) => {
     setEditId(budget._id);
-    setMaDanhMuc(budget.maDanhMuc._id);
+    setMaDanhMuc(budget.maDanhMuc?._id || '');
     setSoTien(budget.soTien.toString());
     setNgayBatDau(new Date(budget.ngayBatDau).toISOString().split('T')[0]);
     setNgayKetThuc(new Date(budget.ngayKetThuc).toISOString().split('T')[0]);
     setGhiChu(budget.ghiChu || '');
     setTrangThai(budget.trangThai);
+    setError('');
   };
 
-  // Hủy chỉnh sửa
   const handleCancelEdit = () => {
     setEditId(null);
     setMaDanhMuc(categories[0]?._id || '');
@@ -157,13 +161,22 @@ const Budget = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <div className="max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold mb-6 text-center">Quản lý ngân sách</h2>
         {error && <p className="text-red-500 mb-4" dangerouslySetInnerHTML={{ __html: error }} />}
         {loading && <p className="text-gray-500 mb-4 text-center">Đang tải dữ liệu...</p>}
 
-        {/* Form thêm/sửa ngân sách */}
         {!loading && (
           <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md mb-6">
             <h3 className="text-xl font-semibold mb-4">
@@ -265,7 +278,6 @@ const Budget = () => {
           </form>
         )}
 
-        {/* Danh sách ngân sách */}
         <div className="bg-white rounded shadow-md">
           <h3 className="text-xl font-semibold p-4">Danh sách ngân sách</h3>
           {loading ? (
