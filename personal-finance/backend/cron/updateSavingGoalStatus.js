@@ -1,49 +1,69 @@
 const mongoose = require('mongoose');
 const cron = require('node-cron');
-const { SavingGoal, Notification } = require('../models');
+const { SavingGoal, Transaction } = require('../models');
 
-// Chạy mỗi ngày lúc 00:00
-const updateSavingGoalStatus = () => {
-  cron.schedule('0 0 * * *', async () => {
+// Hàm cập nhật trạng thái mục tiêu tiết kiệm
+const updateSavingGoalStatus = async (userId, month, year, session) => {
+  try {
+    const savingGoals = await SavingGoal.find({
+      maNguoiDung: userId,
+      ngayTao: {
+        $gte: new Date(year, month - 1, 1),
+        $lt: new Date(year, month, 1),
+      },
+    }).session(session);
+
+    for (const goal of savingGoals) {
+      const transactions = await Transaction.find({
+        maNguoiDung: userId,
+        loai: 'Thu nhập',
+        ngayGiaoDich: {
+          $gte: new Date(year, month - 1, 1),
+          $lt: new Date(year, month, 1),
+        },
+      }).session(session);
+
+      const totalSaved = transactions.reduce((sum, t) => sum + (t.soTien || 0), 0) * 0.1; // Giả định tiết kiệm 10% thu nhập
+      goal.soTienDaTietKiem = totalSaved;
+      goal.trangThai = totalSaved >= goal.soTienMucTieu ? 'Hoàn thành' : 'Đang tiến hành';
+      await goal.save({ session });
+
+      console.log(`Updated saving goal ${goal._id} for user ${userId}, month ${month}/${year}`);
+    }
+  } catch (error) {
+    console.error(`Error updating saving goal for user ${userId}:`, error);
+    throw error;
+  }
+};
+
+// Cron job chạy vào ngày đầu tiên mỗi tháng
+const updateSavingGoalStatusCron = () => {
+  cron.schedule('0 0 1 * *', async () => {
     console.log('Running saving goal status update cron job at:', new Date().toISOString());
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
       const currentDate = new Date();
-      const savingGoals = await SavingGoal.find({ trangThai: 'Đang thực hiện' })
-        .session(session);
-      let updatedCount = 0;
+      const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1);
+      const month = lastMonth.getMonth() + 1;
+      const year = lastMonth.getFullYear();
 
-      for (let goal of savingGoals) {
-        if (new Date(goal.hanChot) < currentDate) {
-          goal.trangThai = goal.soTienHienTai >= goal.soTienMucTieu ? 'Hoàn thành' : 'Thất bại';
-          await goal.save({ session });
-
-          const notification = new Notification({
-            maNguoiDung: goal.maNguoiDung,
-            noiDung: `Mục tiêu tiết kiệm "${goal.tenMucTieu}" đã ${goal.trangThai === 'Hoàn thành' ? 'hoàn thành' : 'thất bại'} vào ${new Date(goal.hanChot).toLocaleDateString()}`,
-            loai: goal.trangThai === 'Hoàn thành' ? 'Thành công' : 'Cảnh báo',
-            daDoc: false,
-          });
-          await notification.save({ session });
-
-          console.log(`SavingGoal ${goal._id} marked as ${goal.trangThai} (hanChot: ${goal.hanChot})`);
-          console.log(`Notification created for user ${goal.maNguoiDung}`);
-          updatedCount++;
-        }
+      const users = await mongoose.model('User').find({}).session(session);
+      for (const user of users) {
+        await updateSavingGoalStatus(user._id, month, year, session);
       }
 
       await session.commitTransaction();
-      session.endSession();
-      console.log(`Saving goal status update completed. Updated ${updatedCount} goals.`);
+      console.log('Saving goal status update completed.');
     } catch (error) {
       await session.abortTransaction();
+      console.error('Saving goal cron job error:', error);
+    } finally {
       session.endSession();
-      console.error('Cron job error:', error);
     }
   }, {
     timezone: 'Asia/Ho_Chi_Minh',
   });
 };
 
-module.exports = updateSavingGoalStatus;
+module.exports = updateSavingGoalStatusCron;
