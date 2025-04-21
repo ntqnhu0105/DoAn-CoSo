@@ -1,51 +1,68 @@
 const mongoose = require('mongoose');
 const cron = require('node-cron');
-const { Budget, Notification } = require('../models');
+const { Budget, Transaction } = require('../models');
 
-// Chạy mỗi ngày lúc 00:00
-const updateBudgetStatus = () => {
-  cron.schedule('* * * * *', async () => {
+// Hàm cập nhật trạng thái ngân sách
+const updateBudgetStatus = async (userId, month, year, session) => {
+  try {
+    const budgets = await Budget.find({
+      maNguoiDung: userId,
+      thang: month,
+      nam: year,
+    }).session(session);
+
+    for (const budget of budgets) {
+      const transactions = await Transaction.find({
+        maNguoiDung: userId,
+        maDanhMuc: budget.maDanhMuc,
+        loai: 'Chi tiêu',
+        ngayGiaoDich: {
+          $gte: new Date(year, month - 1, 1),
+          $lt: new Date(year, month, 1),
+        },
+      }).session(session);
+
+      const totalSpent = transactions.reduce((sum, t) => sum + (t.soTien || 0), 0);
+      budget.tongChiTieu = totalSpent;
+      budget.trangThai = totalSpent > budget.soTien ? 'Vượt ngân sách' : 'Trong ngân sách';
+      await budget.save({ session });
+
+      console.log(`Updated budget ${budget._id} for user ${userId}, month ${month}/${year}`);
+    }
+  } catch (error) {
+    console.error(`Error updating budget for user ${userId}:`, error);
+    throw error;
+  }
+};
+
+// Cron job chạy vào ngày đầu tiên mỗi tháng
+const updateBudgetStatusCron = () => {
+  cron.schedule('0 0 1 * *', async () => {
     console.log('Running budget status update cron job at:', new Date().toISOString());
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
       const currentDate = new Date();
-      const budgets = await Budget.find({ trangThai: true })
-        .populate('maDanhMuc', 'tenDanhMuc')
-        .session(session);
-      let updatedCount = 0;
+      const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1);
+      const month = lastMonth.getMonth() + 1;
+      const year = lastMonth.getFullYear();
 
-      for (let budget of budgets) {
-        if (new Date(budget.ngayKetThuc) < currentDate) {
-          budget.trangThai = false;
-          await budget.save({ session });
-
-          // Tạo thông báo
-          const notification = new Notification({
-            maNguoiDung: budget.maNguoiDung,
-            noiDung: `Ngân sách "${budget.maDanhMuc.tenDanhMuc}" đã kết thúc vào ${new Date(budget.ngayKetThuc).toLocaleDateString()}`,
-            loai: 'Cảnh báo',
-            daDoc: false,
-          });
-          await notification.save({ session });
-
-          console.log(`Budget ${budget._id} marked as ended (ngayKetThuc: ${budget.ngayKetThuc})`);
-          console.log(`Notification created for user ${budget.maNguoiDung}`);
-          updatedCount++;
-        }
+      const users = await mongoose.model('User').find({}).session(session);
+      for (const user of users) {
+        await updateBudgetStatus(user._id, month, year, session);
       }
 
       await session.commitTransaction();
-      session.endSession();
-      console.log(`Budget status update completed. Updated ${updatedCount} budgets.`);
+      console.log('Budget status update completed.');
     } catch (error) {
       await session.abortTransaction();
+      console.error('Budget cron job error:', error);
+    } finally {
       session.endSession();
-      console.error('Cron job error:', error);
     }
   }, {
     timezone: 'Asia/Ho_Chi_Minh',
   });
 };
 
-module.exports = updateBudgetStatus;
+module.exports = updateBudgetStatusCron;

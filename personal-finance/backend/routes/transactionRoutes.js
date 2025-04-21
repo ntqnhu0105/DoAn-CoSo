@@ -8,8 +8,7 @@ router.post('/', async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    console.log('Received transaction payload:', req.body);
-    const { maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai, ghiChu, phuongThucThanhToan } = req.body;
+    const { maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai, ghiChu, phuongThucThanhToan, ngayGiaoDich } = req.body;
 
     if (!maNguoiDung || !maTaiKhoan || !maDanhMuc || !soTien || !loai) {
       await session.abortTransaction();
@@ -69,6 +68,7 @@ router.post('/', async (req, res) => {
       loai,
       ghiChu,
       phuongThucThanhToan,
+      ngayGiaoDich: ngayGiaoDich ? new Date(ngayGiaoDich) : Date.now(),
     });
 
     await transaction.save({ session });
@@ -76,8 +76,6 @@ router.post('/', async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    console.log('Transaction created:', transaction);
-    console.log('Updated account balance:', account.soDu);
     res.status(201).json(transaction);
   } catch (error) {
     await session.abortTransaction();
@@ -93,9 +91,8 @@ router.put('/:id', async (req, res) => {
   session.startTransaction();
   try {
     const { id } = req.params;
-    const { maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai, ghiChu, phuongThucThanhToan } = req.body;
+    const { maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai, ghiChu, phuongThucThanhToan, ngayGiaoDich } = req.body;
 
-    // Kiểm tra giao dịch hiện tại
     const transaction = await Transaction.findById(id).session(session);
     if (!transaction) {
       await session.abortTransaction();
@@ -103,14 +100,12 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Giao dịch không tồn tại' });
     }
 
-    // Kiểm tra quyền sở hữu
     if (transaction.maNguoiDung.toString() !== maNguoiDung) {
       await session.abortTransaction();
       session.endSession();
       return res.status(403).json({ message: 'Bạn không có quyền sửa giao dịch này' });
     }
 
-    // Kiểm tra người dùng
     const user = await User.findById(maNguoiDung).session(session);
     if (!user) {
       await session.abortTransaction();
@@ -118,7 +113,6 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Người dùng không tồn tại' });
     }
 
-    // Kiểm tra số tiền
     const newSoTien = soTien || transaction.soTien;
     if (newSoTien <= 0) {
       await session.abortTransaction();
@@ -126,7 +120,6 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ message: 'Số tiền phải lớn hơn 0' });
     }
 
-    // Kiểm tra tài khoản mới (nếu thay đổi)
     const newAccount = maTaiKhoan ? await Account.findById(maTaiKhoan).session(session) : null;
     if (maTaiKhoan && (!newAccount || newAccount.maNguoiDung.toString() !== maNguoiDung)) {
       await session.abortTransaction();
@@ -134,7 +127,6 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Tài khoản không tồn tại hoặc không thuộc về bạn' });
     }
 
-    // Kiểm tra danh mục mới (nếu thay đổi)
     const newCategory = maDanhMuc ? await Category.findById(maDanhMuc).session(session) : null;
     if (maDanhMuc && !newCategory) {
       await session.abortTransaction();
@@ -142,7 +134,6 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Danh mục không tồn tại' });
     }
 
-    // Hoàn tác số dư tài khoản cũ
     const oldAccount = await Account.findById(transaction.maTaiKhoan).session(session);
     if (!oldAccount) {
       await session.abortTransaction();
@@ -156,7 +147,6 @@ router.put('/:id', async (req, res) => {
     }
     await oldAccount.save({ session });
 
-    // Cập nhật số dư tài khoản mới
     const targetAccount = newAccount || oldAccount;
     const newLoai = loai || transaction.loai;
     if (newLoai === 'Chi tiêu') {
@@ -175,21 +165,19 @@ router.put('/:id', async (req, res) => {
     }
     await targetAccount.save({ session });
 
-    // Cập nhật giao dịch
     transaction.maTaiKhoan = maTaiKhoan || transaction.maTaiKhoan;
     transaction.maDanhMuc = maDanhMuc || transaction.maDanhMuc;
     transaction.soTien = newSoTien;
     transaction.loai = newLoai;
     transaction.ghiChu = ghiChu !== undefined ? ghiChu : transaction.ghiChu;
     transaction.phuongThucThanhToan = phuongThucThanhToan !== undefined ? phuongThucThanhToan : transaction.phuongThucThanhToan;
+    transaction.ngayGiaoDich = ngayGiaoDich ? new Date(ngayGiaoDich) : transaction.ngayGiaoDich;
 
     await transaction.save({ session });
 
     await session.commitTransaction();
     session.endSession();
 
-    console.log('Transaction updated:', transaction);
-    console.log('Updated account balance:', targetAccount.soDu);
     res.json(transaction);
   } catch (error) {
     await session.abortTransaction();

@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [ngayGiaoDich, setNgayGiaoDich] = useState('');
   const userId = localStorage.getItem('userId');
   const navigate = useNavigate();
 
@@ -36,8 +37,6 @@ const Dashboard = () => {
         axios.get(`${process.env.REACT_APP_API_URL}/categories`),
         axios.get(`${process.env.REACT_APP_API_URL}/accounts/${userId}`),
       ]);
-      console.log('Accounts fetched:', accountRes.data);
-      console.log('Categories fetched:', categoryRes.data);
       setTransactions(transactionRes.data);
       setCategories(categoryRes.data);
       setAccounts(accountRes.data);
@@ -45,13 +44,13 @@ const Dashboard = () => {
         setMaDanhMuc(categoryRes.data[0]._id);
       } else {
         setMaDanhMuc('');
-        setError('Vui lòng tạo danh mục tại <a href="/categories" class="text-blue-500 underline">Quản lý danh mục</a>.');
+        setError('Vui lòng tạo danh mục tại <Link to="/categories" className="text-blue-600 underline">Quản lý danh mục</Link>.');
       }
       if (accountRes.data.length > 0) {
         setMaTaiKhoan(accountRes.data[0]._id);
       } else {
         setMaTaiKhoan('');
-        setError('Vui lòng tạo tài khoản tại <a href="/accounts" class="text-blue-500 underline">Quản lý tài khoản</a>.');
+        setError('Vui lòng tạo tài khoản tại <Link to="/accounts" className="text-blue-600 underline">Quản lý tài khoản</Link>.');
       }
     } catch (err) {
       console.error('Fetch data error:', err);
@@ -89,8 +88,8 @@ const Dashboard = () => {
         loai,
         ghiChu,
         phuongThucThanhToan: phuongThucThanhToan || undefined,
+        ngayGiaoDich: ngayGiaoDich ? new Date(ngayGiaoDich).toISOString() : undefined,
       };
-      console.log('Preparing to send request:', payload);
       let res;
       if (editingTransaction) {
         res = await axios.put(`${process.env.REACT_APP_API_URL}/transactions/${editingTransaction._id}`, payload);
@@ -103,7 +102,6 @@ const Dashboard = () => {
         setTransactions([...transactions, res.data]);
         toast.success('Thêm giao dịch thành công!');
       }
-      console.log('Response:', res.data);
 
       // Cập nhật lại tài khoản và danh mục
       await fetchData();
@@ -113,6 +111,7 @@ const Dashboard = () => {
       setLoai('Chi tiêu');
       setGhiChu('');
       setPhuongThucThanhToan('');
+      setNgayGiaoDich('');
       setError('');
       setEditingTransaction(null);
     } catch (err) {
@@ -132,6 +131,7 @@ const Dashboard = () => {
     setMaDanhMuc(transaction.maDanhMuc?._id || '');
     setGhiChu(transaction.ghiChu || '');
     setPhuongThucThanhToan(transaction.phuongThucThanhToan || '');
+    setNgayGiaoDich(transaction.ngayGiaoDich ? new Date(transaction.ngayGiaoDich).toISOString().split('T')[0] : '');
   };
 
   // Xóa giao dịch
@@ -152,65 +152,116 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <ToastContainer />
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold mb-6 text-center">Quản lý chi tiêu</h2>
-        {error && <p className="text-red-500 mb-4" dangerouslySetInnerHTML={{ __html: error }} />}
-        {loading && <p className="text-gray-500 mb-4 text-center">Đang tải dữ liệu...</p>}
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center sm:text-4xl">
+          Quản Lý Chi Tiêu
+        </h2>
 
-        {/* Điều hướng */}
-        <div className="mb-6 flex space-x-4 justify-center">
-          <Link to="/accounts" className="text-blue-500 hover:underline">
-            Quản lý tài khoản
-          </Link>
-          <Link to="/categories" className="text-blue-500 hover:underline">
-            Quản lý danh mục
-          </Link>
-          <Link to="/budgets" className="text-blue-500 hover:underline">
-            Quản lý ngân sách
-          </Link>
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg shadow-sm">
+            <p dangerouslySetInnerHTML={{ __html: error }} />
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center mb-6">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <p className="mt-2 text-gray-600">Đang tải dữ liệu...</p>
+          </div>
+        )}
+
+        {/* Navigation Links */}
+        <div className="mb-8 flex flex-wrap justify-center gap-4">
+          {[
+            { to: '/accounts', label: 'Quản lý tài khoản' },
+            { to: '/categories', label: 'Quản lý danh mục' },
+            { to: '/budgets', label: 'Quản lý ngân sách' },
+          ].map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
-        {/* Form thêm/sửa giao dịch */}
+        {/* Form Thêm/Sửa Giao Dịch */}
         {!loading && (
-          <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md mb-6">
-            <h3 className="text-xl font-semibold mb-4">
-              {editingTransaction ? 'Sửa giao dịch' : 'Thêm giao dịch'}
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-100"
+          >
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">
+              {editingTransaction ? 'Sửa Giao Dịch' : 'Thêm Giao Dịch'}
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-gray-700">Số tiền</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Số Tiền
+                </label>
                 <input
                   type="number"
                   name="soTien"
                   value={soTien}
                   onChange={(e) => setSoTien(e.target.value)}
-                  placeholder="Số tiền"
-                  className="w-full p-2 border rounded"
+                  placeholder="Nhập số tiền"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                   step="0.01"
                   min="0.01"
                 />
               </div>
               <div>
-                <label className="block text-gray-700">Loại</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ngày Giao Dịch
+                </label>
+                <input
+                  type="date"
+                  value={ngayGiaoDich}
+                  onChange={(e) => setNgayGiaoDich(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Loại
+                </label>
                 <select
                   value={loai}
                   onChange={(e) => setLoai(e.target.value)}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
                   <option value="Thu nhập">Thu nhập</option>
                   <option value="Chi tiêu">Chi tiêu</option>
                 </select>
               </div>
               <div>
-                <label className="block text-gray-700">Tài khoản</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tài Khoản
+                </label>
                 <select
                   name="maTaiKhoan"
                   value={maTaiKhoan}
                   onChange={(e) => setMaTaiKhoan(e.target.value)}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 >
                   {accounts.length === 0 ? (
@@ -225,12 +276,14 @@ const Dashboard = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-gray-700">Danh mục</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Danh Mục
+                </label>
                 <select
                   name="maDanhMuc"
                   value={maDanhMuc}
                   onChange={(e) => setMaDanhMuc(e.target.value)}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   required
                 >
                   {categories.length === 0 ? (
@@ -238,18 +291,20 @@ const Dashboard = () => {
                   ) : (
                     categories.map((cat) => (
                       <option key={cat._id} value={cat._id}>
-                        {cat.tenDanhMuc} ({cat.loai})
+                        {cat.tenDucedmuc} ({cat.loai})
                       </option>
                     ))
                   )}
                 </select>
               </div>
               <div>
-                <label className="block text-gray-700">Phương thức thanh toán</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phương Thức Thanh Toán
+                </label>
                 <select
                   value={phuongThucThanhToan}
                   onChange={(e) => setPhuongThucThanhToan(e.target.value)}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
                   <option value="">Chọn phương thức</option>
                   <option value="Tiền mặt">Tiền mặt</option>
@@ -259,33 +314,36 @@ const Dashboard = () => {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-gray-700">Ghi chú</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ghi Chú
+                </label>
                 <input
                   type="text"
                   value={ghiChu}
                   onChange={(e) => setGhiChu(e.target.value)}
-                  placeholder="Ghi chú"
-                  className="w-full p-2 border rounded"
+                  placeholder="Nhập ghi chú"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
               </div>
-              <div className="md:col-span-2 flex space-x-4">
+              <div className="md:col-span-2 flex flex-col sm:flex-row gap-4">
                 <button
                   type="submit"
-                  className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
                   disabled={!maTaiKhoan || !maDanhMuc || !soTien || parseFloat(soTien) <= 0}
                 >
-                  {editingTransaction ? 'Lưu thay đổi' : 'Thêm giao dịch'}
+                  {editingTransaction ? 'Lưu Thay Đổi' : 'Thêm Giao Dịch'}
                 </button>
                 {editingTransaction && (
                   <button
                     type="button"
-                    className="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600"
+                    className="w-full sm:w-auto px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
                     onClick={() => {
                       setEditingTransaction(null);
                       setSoTien('');
                       setLoai('Chi tiêu');
                       setGhiChu('');
                       setPhuongThucThanhToan('');
+                      setNgayGiaoDich('');
                       setError('');
                     }}
                   >
@@ -297,38 +355,70 @@ const Dashboard = () => {
           </form>
         )}
 
-        {/* Danh sách giao dịch */}
-        <div className="bg-white rounded shadow-md">
-          <h3 className="text-xl font-semibold p-4">Danh sách giao dịch</h3>
+        {/* Danh Sách Giao Dịch */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+          <h3 className="text-xl font-semibold text-gray-900 p-6">Danh Sách Giao Dịch</h3>
           {loading ? (
-            <p className="p-4 text-center">Đang tải giao dịch...</p>
+            <div className="p-6 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              <p className="mt-2 text-gray-600">Đang tải giao dịch...</p>
+            </div>
           ) : transactions.length === 0 ? (
-            <p className="p-4 text-center">Chưa có giao dịch nào</p>
+            <p className="p-6 text-center text-gray-500">Chưa có giao dịch nào</p>
           ) : (
             <div className="divide-y divide-gray-200">
               {transactions.map((transaction) => (
-                <div key={transaction._id} className="p-4 flex justify-between items-center">
-                  <div>
-                    <span className="font-medium">{transaction.loai}</span>: {transaction.soTien.toLocaleString()} VNĐ
-                    <br />
-                    <span className="text-gray-600">
-                      Tài khoản: {transaction.maTaiKhoan?.tenTaiKhoan || 'Không xác định'} ({transaction.maTaiKhoan?.soDu?.toLocaleString() || '0'} VNĐ)<br />
-                      Danh mục: {transaction.maDanhMuc?.tenDanhMuc || 'Không xác định'}<br />
-                      Phương thức: {transaction.phuongThucThanhToan || 'Không có'}<br />
-                      Ghi chú: {transaction.ghiChu || 'Không có ghi chú'}<br />
-                      Ngày: {new Date(transaction.ngayGiaoDich).toLocaleDateString()}
-                    </span>
+                <div
+                  key={transaction._id}
+                  className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition-colors duration-150"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`font-medium ${
+                          transaction.loai === 'Thu nhập' ? 'text-green-600' : 'text-red-600'
+                        }`}
+                      >
+                        {transaction.loai}
+                      </span>
+                      <span className="text-gray-900">
+                        {transaction.soTien.toLocaleString()} VNĐ
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600 space-y-1">
+                      <p>
+                        <span className="font-medium">Tài khoản:</span>{' '}
+                        {transaction.maTaiKhoan?.tenTaiKhoan || 'Không xác định'} (
+                        {transaction.maTaiKhoan?.soDu?.toLocaleString() || '0'} VNĐ)
+                      </p>
+                      <p>
+                        <span className="font-medium">Danh mục:</span>{' '}
+                        {transaction.maDanhMuc?.tenDanhMuc || 'Không xác định'}
+                      </p>
+                      <p>
+                        <span className="font-medium">Phương thức:</span>{' '}
+                        {transaction.phuongThucThanhToan || 'Không có'}
+                      </p>
+                      <p>
+                        <span className="font-medium">Ghi chú:</span>{' '}
+                        {transaction.ghiChu || 'Không có ghi chú'}
+                      </p>
+                      <p>
+                        <span className="font-medium">Ngày:</span>{' '}
+                        {new Date(transaction.ngayGiaoDich).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="mt-4 sm:mt-0 flex space-x-3">
                     <button
                       onClick={() => handleEdit(transaction)}
-                      className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors duration-200 text-sm font-medium"
                     >
                       Sửa
                     </button>
                     <button
                       onClick={() => handleDelete(transaction._id)}
-                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 text-sm font-medium"
                     >
                       Xóa
                     </button>
