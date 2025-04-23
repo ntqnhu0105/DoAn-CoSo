@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { Transaction, User, Account, Category } = require('../models');
+const { generateReport } = require('../cron/updateReport'); // Import hàm generateReport
 
 // Thêm giao dịch mới và cập nhật số dư tài khoản
 router.post('/', async (req, res) => {
@@ -75,6 +76,16 @@ router.post('/', async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    // Cập nhật báo cáo sau khi giao dịch thành công
+    const transactionDate = new Date(transaction.ngayGiaoDich);
+    try {
+      await generateReport(maNguoiDung, transactionDate.getMonth() + 1, transactionDate.getFullYear());
+      console.log(`Đã cập nhật báo cáo cho tháng ${transactionDate.getMonth() + 1}/${transactionDate.getFullYear()}`);
+    } catch (reportError) {
+      console.error('Lỗi khi cập nhật báo cáo:', reportError);
+      // Không trả về lỗi để tránh làm thất bại giao dịch chính
+    }
 
     res.status(201).json(transaction);
   } catch (error) {
@@ -165,6 +176,7 @@ router.put('/:id', async (req, res) => {
     }
     await targetAccount.save({ session });
 
+    const oldDate = new Date(transaction.ngayGiaoDich);
     transaction.maTaiKhoan = maTaiKhoan || transaction.maTaiKhoan;
     transaction.maDanhMuc = maDanhMuc || transaction.maDanhMuc;
     transaction.soTien = newSoTien;
@@ -177,6 +189,22 @@ router.put('/:id', async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    // Cập nhật báo cáo sau khi sửa giao dịch
+    const newDate = new Date(transaction.ngayGiaoDich);
+    try {
+      await generateReport(maNguoiDung, oldDate.getMonth() + 1, oldDate.getFullYear());
+      if (oldDate.getMonth() !== newDate.getMonth() || oldDate.getFullYear() !== newDate.getFullYear()) {
+        await generateReport(maNguoiDung, newDate.getMonth() + 1, newDate.getFullYear());
+      }
+      console.log(`Đã cập nhật báo cáo cho tháng ${oldDate.getMonth() + 1}/${oldDate.getFullYear()}` +
+                  (oldDate.getMonth() !== newDate.getMonth() || oldDate.getFullYear() !== newDate.getFullYear()
+                    ? ` và ${newDate.getMonth() + 1}/${newDate.getFullYear()}`
+                    : ''));
+    } catch (reportError) {
+      console.error('Lỗi khi cập nhật báo cáo:', reportError);
+      // Không trả về lỗi để tránh làm thất bại giao dịch chính
+    }
 
     res.json(transaction);
   } catch (error) {
@@ -214,10 +242,22 @@ router.delete('/:id', async (req, res) => {
     }
     await account.save({ session });
 
+    const transactionDate = new Date(transaction.ngayGiaoDich);
+    const userId = transaction.maNguoiDung;
+
     await transaction.deleteOne({ session });
 
     await session.commitTransaction();
     session.endSession();
+
+    // Cập nhật báo cáo sau khi xóa giao dịch
+    try {
+      await generateReport(userId, transactionDate.getMonth() + 1, transactionDate.getFullYear());
+      console.log(`Đã cập nhật báo cáo cho tháng ${transactionDate.getMonth() + 1}/${transactionDate.getFullYear()}`);
+    } catch (reportError) {
+      console.error('Lỗi khi cập nhật báo cáo:', reportError);
+      // Không trả về lỗi để tránh làm thất bại giao dịch chính
+    }
 
     console.log('Transaction deleted:', id);
     console.log('Updated account balance:', account.soDu);

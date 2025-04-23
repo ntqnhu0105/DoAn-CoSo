@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const cron = require('node-cron');
 const fs = require('fs');
-const { Transaction, Report, User, SavingGoal } = require('../models');
+const { Transaction, Report, User } = require('../models');
 
 const logError = (message, error) => {
   fs.appendFileSync('error.log', `${new Date().toISOString()} - ${message}: ${error.message}\n`);
@@ -9,63 +9,65 @@ const logError = (message, error) => {
 
 const generateReport = async (userId, month, year) => {
   try {
-    const existingReport = await Report.findOne({
-      maNguoiDung: userId,
-      thang: month,
-      nam: year,
-    });
-    if (existingReport) {
-      console.log(`Báo cáo đã tồn tại cho người dùng ${userId}, ${month}/${year}`);
+    // Kiểm tra userId hợp lệ
+    if (!mongoose.isValidObjectId(userId)) {
+      console.log(`ID người dùng không hợp lệ: ${userId}`);
       return null;
     }
 
+    // Lấy giao dịch trong tháng
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
     const transactions = await Transaction.find({
       maNguoiDung: userId,
-      ngayGiaoDich: {
-        $gte: new Date(year, month - 1, 1),
-        $lt: new Date(year, month, 1),
-      },
+      ngayGiaoDich: { $gte: startDate, $lt: endDate },
     });
 
+    // Tính tổng thu nhập và chi tiêu
     const tongThuNhap = transactions
       .filter(t => t.loai === 'Thu nhập')
       .reduce((sum, t) => sum + (t.soTien || 0), 0);
-
     const tongChiTieu = transactions
       .filter(t => t.loai === 'Chi tiêu')
       .reduce((sum, t) => sum + (t.soTien || 0), 0);
 
-    const savingGoals = await SavingGoal.find({
-      maNguoiDung: userId,
-      ngayTao: {
-        $gte: new Date(year, month - 1, 1),
-        $lt: new Date(year, month, 1),
-      },
-    });
+    // Tính tổng tiết kiệm: tongThuNhap - tongChiTieu
+    const soTienTietKiem = tongThuNhap - tongChiTieu;
 
-    const soTienTietKiem = savingGoals.reduce((sum, sg) => sum + (sg.soTienHienTai || 0), 0) || (tongThuNhap - tongChiTieu);
-
+    // Nếu không có dữ liệu, xóa báo cáo hiện có (nếu tồn tại)
     if (tongThuNhap === 0 && tongChiTieu === 0 && soTienTietKiem === 0) {
-      console.log(`Không có hoạt động cho người dùng ${userId} trong ${month}/${year}, bỏ qua báo cáo`);
+      await Report.deleteOne({ maNguoiDung: userId, thang: month, nam: year });
+      console.log(`Không có hoạt động cho người dùng ${userId} trong ${month}/${year}, xóa báo cáo nếu tồn tại`);
       return null;
     }
 
-    const report = new Report({
-      maNguoiDung: userId,
-      thang: month,
-      nam: year,
-      tongThuNhap,
-      tongChiTieu,
-      soTienTietKiem,
-      ghiChu: `Báo cáo tự động cho tháng ${month}/${year}`,
-    });
+    // Kiểm tra báo cáo đã tồn tại
+    let report = await Report.findOne({ maNguoiDung: userId, thang: month, nam: year });
+    if (report) {
+      // Cập nhật báo cáo hiện có
+      report.tongThuNhap = tongThuNhap;
+      report.tongChiTieu = tongChiTieu;
+      report.soTienTietKiem = soTienTietKiem;
+      report.ghiChu = `Báo cáo cập nhật cho tháng ${month}/${year}`;
+    } else {
+      // Tạo báo cáo mới
+      report = new Report({
+        maNguoiDung: userId,
+        thang: month,
+        nam: year,
+        tongThuNhap,
+        tongChiTieu,
+        soTienTietKiem,
+        ghiChu: `Báo cáo tự động cho tháng ${month}/${year}`,
+      });
+    }
 
     await report.save();
-    console.log(`Đã tạo báo cáo cho người dùng ${userId} cho ${month}/${year}`);
+    console.log(`Đã cập nhật/tạo báo cáo cho người dùng ${userId} cho ${month}/${year}`);
     return report;
   } catch (error) {
-    console.error(`Lỗi khi tạo báo cáo cho người dùng ${userId}:`, error);
-    logError(`Lỗi khi tạo báo cáo cho người dùng ${userId}`, error);
+    console.error(`Lỗi khi tạo/cập nhật báo cáo cho người dùng ${userId}:`, error);
+    logError(`Lỗi khi tạo/cập nhật báo cáo cho người dùng ${userId}`, error);
     throw error;
   }
 };

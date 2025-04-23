@@ -13,7 +13,7 @@ import Investments from './pages/Investments';
 import Report from './pages/Report';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
-
+import Overview from './pages/Overview';
 // Component để ẩn Navbar trên các trang cụ thể
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -133,6 +133,16 @@ function App() {
             <Layout>
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            </Layout>
+          }
+        />
+        <Route
+          path="/overview"
+          element={
+            <Layout>
+              <ProtectedRoute>
+                <Overview />
               </ProtectedRoute>
             </Layout>
           }
