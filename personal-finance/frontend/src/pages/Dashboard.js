@@ -3,6 +3,11 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import {
+  BanknotesIcon,
+  PencilIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
 
 const Dashboard = () => {
   const [transactions, setTransactions] = useState([]);
@@ -21,14 +26,13 @@ const Dashboard = () => {
   const userId = localStorage.getItem('userId');
   const navigate = useNavigate();
 
-  // Kiểm tra userId
   useEffect(() => {
     if (!userId) {
       navigate('/');
+      toast.error('Vui lòng đăng nhập để quản lý chi tiêu');
     }
   }, [userId, navigate]);
 
-  // Hàm lấy dữ liệu chung
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -41,16 +45,17 @@ const Dashboard = () => {
       setCategories(categoryRes.data);
       setAccounts(accountRes.data);
       if (categoryRes.data.length > 0) {
-        setMaDanhMuc(categoryRes.data[0]._id);
+        const validCategory = categoryRes.data.find(cat => cat._id);
+        setMaDanhMuc(validCategory ? validCategory._id : '');
       } else {
         setMaDanhMuc('');
-        setError('Vui lòng tạo danh mục tại <Link to="/categories" className="text-blue-600 underline">Quản lý danh mục</Link>.');
+        setError('Vui lòng tạo danh mục tại <Link to="/categories" className="text-emerald-600 underline">Quản lý danh mục</Link>.');
       }
       if (accountRes.data.length > 0) {
         setMaTaiKhoan(accountRes.data[0]._id);
       } else {
         setMaTaiKhoan('');
-        setError('Vui lòng tạo tài khoản tại <Link to="/accounts" className="text-blue-600 underline">Quản lý tài khoản</Link>.');
+        setError('Vui lòng tạo tài khoản tại <Link to="/accounts" className="text-emerald-600 underline">Quản lý tài khoản</Link>.');
       }
     } catch (err) {
       console.error('Fetch data error:', err);
@@ -61,12 +66,10 @@ const Dashboard = () => {
     }
   };
 
-  // Lấy dữ liệu ban đầu
   useEffect(() => {
     if (userId) fetchData();
   }, [userId]);
 
-  // Thêm hoặc sửa giao dịch
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!maTaiKhoan || !maDanhMuc || !soTien) {
@@ -103,10 +106,7 @@ const Dashboard = () => {
         toast.success('Thêm giao dịch thành công!');
       }
 
-      // Cập nhật lại tài khoản và danh mục
       await fetchData();
-
-      // Reset form
       setSoTien('');
       setLoai('Chi tiêu');
       setGhiChu('');
@@ -122,7 +122,6 @@ const Dashboard = () => {
     }
   };
 
-  // Mở form sửa giao dịch
   const handleEdit = (transaction) => {
     setEditingTransaction(transaction);
     setSoTien(transaction.soTien.toString());
@@ -134,7 +133,6 @@ const Dashboard = () => {
     setNgayGiaoDich(transaction.ngayGiaoDich ? new Date(transaction.ngayGiaoDich).toISOString().split('T')[0] : '');
   };
 
-  // Xóa giao dịch
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa giao dịch này?')) return;
     try {
@@ -152,7 +150,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-emerald-100 p-4 sm:p-6">
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -163,54 +161,56 @@ const Dashboard = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="colored"
+        theme="light"
       />
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center sm:text-4xl">
-          Quản Lý Chi Tiêu
-        </h2>
+        <div className="flex items-center space-x-3 mb-6">
+          <BanknotesIcon className="h-8 w-8 text-emerald-600" />
+          <h2 className="text-3xl font-bold text-gray-800">Quản lý giao dịch</h2>
+        </div>
 
-        {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg shadow-sm">
             <p dangerouslySetInnerHTML={{ __html: error }} />
           </div>
         )}
 
-        {/* Loading State */}
         {loading && (
           <div className="text-center mb-6">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
             <p className="mt-2 text-gray-600">Đang tải dữ liệu...</p>
           </div>
         )}
 
-        {/* Navigation Links */}
         <div className="mb-8 flex flex-wrap justify-center gap-4">
           {[
+            { to: '/overview', label: 'Tổng quan' },
             { to: '/accounts', label: 'Quản lý tài khoản' },
             { to: '/categories', label: 'Quản lý danh mục' },
             { to: '/budgets', label: 'Quản lý ngân sách' },
+            { to: '/reports', label: 'Báo cáo tài chính' },
           ].map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 text-sm font-medium"
             >
               {link.label}
             </Link>
           ))}
         </div>
 
-        {/* Form Thêm/Sửa Giao Dịch */}
         {!loading && (
           <form
             onSubmit={handleSubmit}
-            className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-100"
+            className="bg-white p-6 rounded-xl shadow-lg mb-8 border border-transparent hover:shadow-xl transition-all duration-300"
           >
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">
-              {editingTransaction ? 'Sửa Giao Dịch' : 'Thêm Giao Dịch'}
-            </h3>
+            <div className="flex items-center space-x-3 mb-6">
+              <BanknotesIcon className="h-6 w-6 text-emerald-600" />
+              <h3 className="text-xl font-semibold text-gray-700">
+                {editingTransaction ? 'Sửa Giao Dịch' : 'Thêm Giao Dịch'}
+              </h3>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -222,7 +222,7 @@ const Dashboard = () => {
                   value={soTien}
                   onChange={(e) => setSoTien(e.target.value)}
                   placeholder="Nhập số tiền"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 transition-all duration-200"
                   required
                   step="0.01"
                   min="0.01"
@@ -236,7 +236,7 @@ const Dashboard = () => {
                   type="date"
                   value={ngayGiaoDich}
                   onChange={(e) => setNgayGiaoDich(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 transition-all duration-200"
                   required
                 />
               </div>
@@ -247,7 +247,7 @@ const Dashboard = () => {
                 <select
                   value={loai}
                   onChange={(e) => setLoai(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 transition-all duration-200"
                 >
                   <option value="Thu nhập">Thu nhập</option>
                   <option value="Chi tiêu">Chi tiêu</option>
@@ -261,7 +261,7 @@ const Dashboard = () => {
                   name="maTaiKhoan"
                   value={maTaiKhoan}
                   onChange={(e) => setMaTaiKhoan(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 transition-all duration-200"
                   required
                 >
                   {accounts.length === 0 ? (
@@ -283,7 +283,7 @@ const Dashboard = () => {
                   name="maDanhMuc"
                   value={maDanhMuc}
                   onChange={(e) => setMaDanhMuc(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 transition-all duration-200"
                   required
                 >
                   {categories.length === 0 ? (
@@ -291,7 +291,7 @@ const Dashboard = () => {
                   ) : (
                     categories.map((cat) => (
                       <option key={cat._id} value={cat._id}>
-                        {cat.tenDucedmuc} ({cat.loai})
+                        {cat.tenDanhMuc} ({cat.loai})
                       </option>
                     ))
                   )}
@@ -304,7 +304,7 @@ const Dashboard = () => {
                 <select
                   value={phuongThucThanhToan}
                   onChange={(e) => setPhuongThucThanhToan(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 transition-all duration-200"
                 >
                   <option value="">Chọn phương thức</option>
                   <option value="Tiền mặt">Tiền mặt</option>
@@ -322,21 +322,22 @@ const Dashboard = () => {
                   value={ghiChu}
                   onChange={(e) => setGhiChu(e.target.value)}
                   placeholder="Nhập ghi chú"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 transition-all duration-200"
                 />
               </div>
               <div className="md:col-span-2 flex flex-col sm:flex-row gap-4">
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
                   disabled={!maTaiKhoan || !maDanhMuc || !soTien || parseFloat(soTien) <= 0}
                 >
-                  {editingTransaction ? 'Lưu Thay Đổi' : 'Thêm Giao Dịch'}
+                  <BanknotesIcon className="h-5 w-5" />
+                  <span>{editingTransaction ? 'Lưu Thay Đổi' : 'Thêm Giao Dịch'}</span>
                 </button>
                 {editingTransaction && (
                   <button
                     type="button"
-                    className="w-full sm:w-auto px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                    className="w-full sm:w-auto px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 flex items-center space-x-2"
                     onClick={() => {
                       setEditingTransaction(null);
                       setSoTien('');
@@ -347,7 +348,8 @@ const Dashboard = () => {
                       setError('');
                     }}
                   >
-                    Hủy
+                    <BanknotesIcon className="h-5 w-5" />
+                    <span>Hủy</span>
                   </button>
                 )}
               </div>
@@ -355,12 +357,14 @@ const Dashboard = () => {
           </form>
         )}
 
-        {/* Danh Sách Giao Dịch */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100">
-          <h3 className="text-xl font-semibold text-gray-900 p-6">Danh Sách Giao Dịch</h3>
+        <div className="bg-white rounded-xl shadow-lg border border-transparent hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center space-x-3 p-6">
+            <BanknotesIcon className="h-6 w-6 text-emerald-600" />
+            <h3 className="text-xl font-semibold text-gray-700">Danh Sách Giao Dịch</h3>
+          </div>
           {loading ? (
             <div className="p-6 text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
               <p className="mt-2 text-gray-600">Đang tải giao dịch...</p>
             </div>
           ) : transactions.length === 0 ? (
@@ -370,22 +374,23 @@ const Dashboard = () => {
               {transactions.map((transaction) => (
                 <div
                   key={transaction._id}
-                  className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition-colors duration-150"
+                  className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-50 transition-all duration-150"
                 >
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BanknotesIcon
+                        className={`h-5 w-5 ${transaction.loai === 'Thu nhập' ? 'text-emerald-600' : 'text-red-600'}`}
+                      />
                       <span
-                        className={`font-medium ${
-                          transaction.loai === 'Thu nhập' ? 'text-green-600' : 'text-red-600'
-                        }`}
+                        className={`font-medium ${transaction.loai === 'Thu nhập' ? 'text-emerald-600' : 'text-red-600'}`}
                       >
                         {transaction.loai}
                       </span>
-                      <span className="text-gray-900">
+                      <span className="text-gray-900 font-bold">
                         {transaction.soTien.toLocaleString()} VNĐ
                       </span>
                     </div>
-                    <div className="mt-2 text-sm text-gray-600 space-y-1">
+                    <div className="text-sm text-gray-600 space-y-1">
                       <p>
                         <span className="font-medium">Tài khoản:</span>{' '}
                         {transaction.maTaiKhoan?.tenTaiKhoan || 'Không xác định'} (
@@ -412,15 +417,17 @@ const Dashboard = () => {
                   <div className="mt-4 sm:mt-0 flex space-x-3">
                     <button
                       onClick={() => handleEdit(transaction)}
-                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors duration-200 text-sm font-medium"
+                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-all duration-200 flex items-center space-x-2"
                     >
-                      Sửa
+                      <PencilIcon className="h-5 w-5" />
+                      <span>Sửa</span>
                     </button>
                     <button
                       onClick={() => handleDelete(transaction._id)}
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 text-sm font-medium"
+                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 flex items-center space-x-2"
                     >
-                      Xóa
+                      <TrashIcon className="h-5 w-5" />
+                      <span>Xóa</span>
                     </button>
                   </div>
                 </div>

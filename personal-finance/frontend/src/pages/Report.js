@@ -3,7 +3,12 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FunnelIcon } from '@heroicons/react/24/outline';
+import {
+  FunnelIcon,
+  ArrowUpCircleIcon,
+  ArrowDownCircleIcon,
+  CurrencyDollarIcon,
+} from '@heroicons/react/24/outline';
 import { Line } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
 
@@ -12,7 +17,7 @@ const Report = () => {
   const [filterYear, setFilterYear] = useState('Tất cả');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [generating, setGenerating] = useState(false); // Thêm trạng thái generating
+  const [generating, setGenerating] = useState(false);
   const userId = localStorage.getItem('userId');
   const navigate = useNavigate();
 
@@ -95,26 +100,26 @@ const Report = () => {
       labels: months.map((m) => `Tháng ${m}`),
       datasets: [
         {
-          label: 'Tổng thu nhập (VNĐ)',
+          label: 'Thu nhập (VNĐ)',
           data: incomeData,
-          borderColor: 'rgba(75, 192, 192, 1)',
-          backgroundColor: 'rgba(75, 192, 192, 0.6)',
+          borderColor: 'rgba(16, 185, 129, 1)',
+          backgroundColor: 'rgba(16, 185, 129, 0.6)',
           tension: 0.4,
           fill: false,
         },
         {
-          label: 'Tổng chi tiêu (VNĐ)',
+          label: 'Chi tiêu (VNĐ)',
           data: expenseData,
-          borderColor: 'rgba(255, 99, 132, 1)',
-          backgroundColor: 'rgba(255, 99, 132, 0.6)',
+          borderColor: 'rgba(239, 68, 68, 1)',
+          backgroundColor: 'rgba(239, 68, 68, 0.6)',
           tension: 0.4,
           fill: false,
         },
         {
-          label: 'Số tiền tiết kiệm (VNĐ)',
+          label: 'Tiết kiệm (VNĐ)',
           data: savingsData,
-          borderColor: 'rgba(54, 162, 235, 1)',
-          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          backgroundColor: 'rgba(59, 130, 246, 0.6)',
           tension: 0.4,
           fill: false,
         },
@@ -125,7 +130,7 @@ const Report = () => {
   const uniqueYears = [...new Set(reports.map((rep) => rep.nam))].sort((a, b) => b - a);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 p-6">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-emerald-100 p-4 sm:p-6">
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -136,33 +141,55 @@ const Report = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        theme="light"
       />
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">Báo cáo Tài chính</h2>
+        <div className="flex items-center space-x-3 mb-6">
+          <FunnelIcon className="h-8 w-8 text-emerald-600" />
+          <h2 className="text-3xl font-bold text-gray-800">Báo cáo Tài chính</h2>
+        </div>
 
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-
-        <div className="bg-white p-4 rounded-lg shadow-md mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700">Tổng thu nhập</h3>
-            <p className="text-2xl font-bold text-green-600">{totalIncome.toLocaleString()} VNĐ</p>
+        {error && (
+          <div className="bg-red-100 p-4 rounded-lg mb-6 flex items-center space-x-2">
+            <span className="text-red-600">{error}</span>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700">Tổng chi tiêu</h3>
+        )}
+
+        {/* Tổng quan thu nhập, chi tiêu, tiết kiệm */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 border border-transparent hover:border-emerald-400">
+            <div className="flex items-center space-x-3 mb-4">
+              <ArrowUpCircleIcon className="h-6 w-6 text-emerald-600" />
+              <h3 className="text-lg font-semibold text-gray-700">Tổng thu nhập</h3>
+            </div>
+            <p className="text-2xl font-bold text-emerald-600">{totalIncome.toLocaleString()} VNĐ</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 border border-transparent hover:border-emerald-400">
+            <div className="flex items-center space-x-3 mb-4">
+              <ArrowDownCircleIcon className="h-6 w-6 text-red-600" />
+              <h3 className="text-lg font-semibold text-gray-700">Tổng chi tiêu</h3>
+            </div>
             <p className="text-2xl font-bold text-red-600">{totalExpense.toLocaleString()} VNĐ</p>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700">Tổng tiết kiệm</h3>
+          <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 border border-transparent hover:border-emerald-400">
+            <div className="flex items-center space-x-3 mb-4">
+              <CurrencyDollarIcon className="h-6 w-6 text-blue-600" />
+              <h3 className="text-lg font-semibold text-gray-700">Tổng tiết kiệm</h3>
+            </div>
             <p className="text-2xl font-bold text-blue-600">{totalSavings.toLocaleString()} VNĐ</p>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-700">Lọc theo năm</h3>
+        {/* Lọc theo năm */}
+        <div className="bg-white p-4 rounded-xl shadow-lg mb-6 flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <FunnelIcon className="h-6 w-6 text-gray-500" />
+            <h3 className="text-lg font-semibold text-gray-700">Lọc theo năm</h3>
+          </div>
           <select
             value={filterYear}
             onChange={(e) => setFilterYear(e.target.value)}
-            className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-50"
           >
             <option value="Tất cả">Tất cả</option>
             {uniqueYears.map((year) => (
@@ -171,10 +198,14 @@ const Report = () => {
           </select>
         </div>
 
+        {/* Biểu đồ */}
         {filteredReports.length > 0 && (
-          <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">Báo cáo tài chính theo tháng</h3>
-            <div className="h-64">
+          <div className="bg-white p-6 rounded-xl shadow-lg mb-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <FunnelIcon className="h-6 w-6 text-emerald-600" />
+              <h3 className="text-lg font-semibold text-gray-700">Báo cáo tài chính theo tháng</h3>
+            </div>
+            <div className="h-80">
               <Line
                 data={chartData()}
                 options={{
@@ -192,6 +223,10 @@ const Report = () => {
                   },
                   plugins: {
                     legend: { display: true, position: 'top' },
+                    tooltip: {
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      cornerRadius: 8,
+                    },
                   },
                 }}
               />
@@ -199,26 +234,39 @@ const Report = () => {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md overflow-x-auto">
-          <div className="flex justify-between items-center p-4">
-            <h3 className="text-xl font-semibold text-gray-800">Danh sách Báo cáo</h3>
+        {/* Danh sách báo cáo */}
+        <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+          <div className="flex justify-between items-center p-6">
+            <div className="flex items-center space-x-3">
+              <FunnelIcon className="h-6 w-6 text-emerald-600" />
+              <h3 className="text-xl font-semibold text-gray-800">Danh sách Báo cáo</h3>
+            </div>
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleGenerateReport}
                 disabled={generating}
-                className={`bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 ${generating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`px-4 py-2 rounded-lg text-white flex items-center space-x-2 transition-all duration-300 ${
+                  generating ? 'bg-gray-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
               >
-                {generating ? 'Đang tạo...' : 'Tạo Báo cáo Tháng Trước'}
+                <FunnelIcon className="h-5 w-5" />
+                <span>{generating ? 'Đang tạo...' : 'Tạo Báo cáo Tháng Trước'}</span>
               </button>
-              <FunnelIcon className="h-6 w-6 text-gray-500" />
             </div>
           </div>
           {loading ? (
-            <p className="p-4 text-center text-gray-500">Đang tải báo cáo...</p>
+            <p className="p-6 text-center text-gray-500 animate-pulse">Đang tải báo cáo...</p>
           ) : filteredReports.length === 0 ? (
-            <p className="p-4 text-center text-gray-500">
-              Chưa có báo cáo nào. Vui lòng thử tạo báo cáo thủ công hoặc{' '}
-              <a href="/transactions" className="text-blue-500 underline">
+            <p className="p-6 text-center text-gray-500">
+              Chưa có báo cáo nào. Vui lòng thử{' '}
+              <button
+                onClick={handleGenerateReport}
+                className="text-emerald-500 underline hover:text-emerald-600"
+              >
+                tạo báo cáo thủ công
+              </button>{' '}
+              hoặc{' '}
+              <a href="/transactions" className="text-emerald-500 underline hover:text-emerald-600">
                 thêm giao dịch
               </a>{' '}
               để tạo báo cáo tự động vào đầu tháng sau.
@@ -227,23 +275,23 @@ const Report = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tháng</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Năm</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng thu nhập (VNĐ)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng chi tiêu (VNĐ)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số tiền tiết kiệm (VNĐ)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ghi chú</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tháng</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Năm</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thu nhập (VNĐ)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chi tiêu (VNĐ)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiết kiệm (VNĐ)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ghi chú</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredReports.map((rep) => (
                   <tr key={rep._id} className="hover:bg-gray-50 transition duration-150">
-                    <td className="px-4 py-4 whitespace-nowrap font-medium text-gray-900">{rep.thang}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">{rep.nam}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-green-600">{rep.tongThuNhap.toLocaleString()}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-red-600">{rep.tongChiTieu.toLocaleString()}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-blue-600">{(rep.soTienTietKiem || 0).toLocaleString()}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">{rep.ghiChu || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{rep.thang}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{rep.nam}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-emerald-600">{rep.tongThuNhap.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-red-600">{rep.tongChiTieu.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-blue-600">{(rep.soTienTietKiem || 0).toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{rep.ghiChu || '-'}</td>
                   </tr>
                 ))}
               </tbody>

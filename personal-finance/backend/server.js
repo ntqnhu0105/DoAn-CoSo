@@ -44,7 +44,7 @@ app.use('/api/saving-goals', require('./routes/savingGoalRoutes'));
 app.use('/api/debts', require('./routes/debtRoutes'));
 app.use('/api/investments', require('./routes/investmentRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
-
+app.use('/api/overview', require('./routes/overviewRoutes'));
 // Khởi động server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
