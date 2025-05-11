@@ -58,19 +58,6 @@ const Account = () => {
         <h2 className="text-3xl font-bold mb-6 text-center">Quản lý tài khoản</h2>
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        {/* Điều hướng */}
-        <div className="mb-6 flex space-x-4 justify-center">
-          <Link to="/dashboard" className="text-blue-500 hover:underline">
-            Trang chính
-          </Link>
-          <Link to="/categories" className="text-blue-500 hover:underline">
-            Quản lý danh mục
-          </Link>
-          <Link to="/budgets" className="text-blue-500 hover:underline">
-            Quản lý ngân sách
-          </Link>
-        </div>
-
         {/* Form thêm tài khoản */}
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
