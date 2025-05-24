@@ -302,6 +302,7 @@ const Dashboard = () => {
         position: 'top-right',
         autoClose: 3000,
       });
+      return;
     }
   }, [userId, navigate]);
 
@@ -312,11 +313,23 @@ const Dashboard = () => {
         if (!userId) return;
         setLoading(true);
         try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            throw new Error('Không tìm thấy token, vui lòng đăng nhập lại');
+          }
+          console.log('Fetching data with userId:', userId, 'token:', token.slice(0, 10) + '...');
+          const headers = { Authorization: `Bearer ${token}` };
+          console.log('Request headers:', headers);
           const [transactionRes, categoryRes, accountRes] = await Promise.all([
-            axios.get(`${API_URL}/transactions/${userId}`),
-            axios.get(`${API_URL}/categories`),
-            axios.get(`${API_URL}/accounts/${userId}`),
+            axios.get(`${API_URL}/transactions/${userId}`, { headers }),
+            axios.get(`${API_URL}/categories`, { headers }),
+            axios.get(`${API_URL}/accounts/${userId}`, { headers }),
           ]);
+          console.log('API responses:', {
+            transactions: transactionRes.data,
+            categories: categoryRes.data,
+            accounts: accountRes.data,
+          });
           setTransactions(transactionRes.data);
           setCategories(categoryRes.data);
           setAccounts(accountRes.data);
@@ -344,9 +357,16 @@ const Dashboard = () => {
         } catch (err) {
           let errorMessage = 'Lỗi khi tải dữ liệu.';
           if (err.response) {
+            console.error('API error response:', {
+              status: err.response.status,
+              data: err.response.data,
+              headers: err.response.headers,
+            });
             switch (err.response.status) {
               case 401:
-                errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+              case 403:
+                errorMessage = 'Phiên đăng nhập hết hạn hoặc không có quyền truy cập. Vui lòng đăng nhập lại.';
+                localStorage.clear();
                 navigate('/');
                 break;
               case 404:
@@ -355,8 +375,10 @@ const Dashboard = () => {
               default:
                 errorMessage = err.response.data.message || 'Lỗi server.';
             }
+          } else {
+            errorMessage = err.message || 'Lỗi kết nối server.';
           }
-          console.error('Fetch data error:', err.response || err);
+          console.error('Fetch data error:', err);
           setError(errorMessage);
           toast.error(errorMessage);
         } finally {
@@ -384,6 +406,21 @@ const Dashboard = () => {
       return;
     }
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Không tìm thấy token, vui lòng đăng nhập lại');
+      }
+      console.log('Submitting transaction with payload:', {
+        maNguoiDung: userId,
+        maTaiKhoan,
+        maDanhMuc,
+        soTien,
+        loai,
+        ghiChu,
+        phuongThucThanhToan,
+        ngayGiaoDich,
+      });
+      const headers = { Authorization: `Bearer ${token}` };
       const payload = {
         maNguoiDung: userId,
         maTaiKhoan,
@@ -396,13 +433,13 @@ const Dashboard = () => {
       };
       let res;
       if (editingTransaction) {
-        res = await axios.put(`${API_URL}/transactions/${editingTransaction._id}`, payload);
+        res = await axios.put(`${API_URL}/transactions/${editingTransaction._id}`, payload, { headers });
         setTransactions(
           transactions.map((t) => (t._id === editingTransaction._id ? res.data : t))
         );
         toast.success('Sửa giao dịch thành công!');
       } else {
-        res = await axios.post(`${API_URL}/transactions`, payload);
+        res = await axios.post(`${API_URL}/transactions`, payload, { headers });
         setTransactions([...transactions, res.data]);
         toast.success('Thêm giao dịch thành công!');
       }
@@ -418,9 +455,16 @@ const Dashboard = () => {
     } catch (err) {
       let errorMessage = 'Lỗi khi xử lý giao dịch.';
       if (err.response) {
+        console.error('Transaction error response:', {
+          status: err.response.status,
+          data: err.response.data,
+          headers: err.response.headers,
+        });
         switch (err.response.status) {
           case 401:
-            errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+          case 403:
+            errorMessage = 'Phiên đăng nhập hết hạn hoặc không có quyền truy cập. Vui lòng đăng nhập lại.';
+            localStorage.clear();
             navigate('/');
             break;
           case 400:
@@ -429,8 +473,10 @@ const Dashboard = () => {
           default:
             errorMessage = err.response.data.message || 'Lỗi server.';
         }
+      } else {
+        errorMessage = err.message || 'Lỗi kết nối server.';
       }
-      console.error('Request error:', err.response || err);
+      console.error('Request error:', err);
       setError(errorMessage);
       toast.error(errorMessage);
     }
@@ -452,7 +498,13 @@ const Dashboard = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa giao dịch này?')) return;
     try {
-      await axios.delete(`${API_URL}/transactions/${id}`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Không tìm thấy token, vui lòng đăng nhập lại');
+      }
+      console.log('Deleting transaction:', id);
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.delete(`${API_URL}/transactions/${id}`, { headers });
       setTransactions(transactions.filter((t) => t._id !== id));
       await fetchData();
       setError('');
@@ -460,9 +512,16 @@ const Dashboard = () => {
     } catch (err) {
       let errorMessage = 'Lỗi khi xóa giao dịch.';
       if (err.response) {
+        console.error('Delete error response:', {
+          status: err.response.status,
+          data: err.response.data,
+          headers: err.response.headers,
+        });
         switch (err.response.status) {
           case 401:
-            errorMessage = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+          case 403:
+            errorMessage = 'Phiên đăng nhập hết hạn hoặc không có quyền truy cập. Vui lòng đăng nhập lại.';
+            localStorage.clear();
             navigate('/');
             break;
           case 404:
@@ -471,8 +530,10 @@ const Dashboard = () => {
           default:
             errorMessage = err.response.data.message || 'Lỗi server.';
         }
+      } else {
+        errorMessage = err.message || 'Lỗi kết nối server.';
       }
-      console.error('Delete error:', err.response || err);
+      console.error('Delete error:', err);
       setError(errorMessage);
       toast.error(errorMessage);
     }
@@ -504,7 +565,6 @@ const Dashboard = () => {
         closeButton={true}
       />
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
           <div className="flex items-center space-x-4 mb-6 md:mb-0">
             <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-4 rounded-full shadow-lg">

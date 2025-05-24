@@ -121,6 +121,11 @@ const categorySchema = new mongoose.Schema({
     trim: true,
     maxlength: [200, 'Mô tả không được vượt quá 200 ký tự'],
   },
+  maNguoiDung: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Người dùng là bắt buộc'],
+  },
   ngayTao: {
     type: Date,
     default: Date.now,

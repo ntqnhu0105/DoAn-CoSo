@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { User } = require('../models');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
@@ -13,7 +14,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+    cb(null, `${uniqueSuffix}${path.extname(file.originalName)}`);
   },
 });
 
@@ -22,7 +23,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png|gif/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = filetypes.test(path.extname(file.originalName).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);
     if (extname && mimetype) {
       return cb(null, true);
@@ -31,10 +32,36 @@ const upload = multer({
   },
 });
 
+// Middleware xác thực JWT
+const authenticate = async (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    console.error('Không có token trong header Authorization');
+    return res.status(401).json({ message: 'Không có token, truy cập bị từ chối' });
+  }
+  try {
+    console.log('Verifying token:', token.slice(0, 10) + '...');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+    console.log('Decoded JWT:', decoded);
+    const user = await User.findById(decoded.userId).select('-matKhau');
+    if (!user) {
+      console.error('Người dùng không tồn tại:', decoded.userId);
+      return res.status(401).json({ message: 'Người dùng không tồn tại' });
+    }
+    console.log('User found:', user._id);
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('JWT error:', error.message);
+    return res.status(401).json({ message: 'Token không hợp lệ', error: error.message });
+  }
+};
+
 // Đăng ký
 router.post('/register', upload.single('anhDaiDien'), async (req, res) => {
   try {
     const { tenDangNhap, matKhau, email, hoTen, ngaySinh, gioiTinh } = req.body;
+    console.log('POST /register:', { tenDangNhap, email, hoTen });
 
     if (!tenDangNhap || !matKhau || !email || !hoTen) {
       return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ các trường bắt buộc' });
@@ -57,7 +84,7 @@ router.post('/register', upload.single('anhDaiDien'), async (req, res) => {
 
     let anhDaiDien = '';
     if (req.file) {
-      anhDaiDien = `/uploads/${req.file.filename}`;
+      anhDaiDien = `/Uploads/${req.file.filename}`;
     }
 
     const user = new User({
@@ -71,8 +98,13 @@ router.post('/register', upload.single('anhDaiDien'), async (req, res) => {
     });
     await user.save();
 
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', {
+      expiresIn: '7d',
+    });
+
     res.status(201).json({
       message: 'Đăng ký thành công',
+      token,
       user: { tenDangNhap, email, hoTen, ngaySinh, gioiTinh, anhDaiDien },
     });
   } catch (error) {
@@ -85,6 +117,7 @@ router.post('/register', upload.single('anhDaiDien'), async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { tenDangNhap, matKhau } = req.body;
+    console.log('POST /login:', { tenDangNhap });
 
     if (!tenDangNhap || !matKhau) {
       return res.status(400).json({ message: 'Vui lòng cung cấp tenDangNhap và matKhau' });
@@ -100,8 +133,13 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng' });
     }
 
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', {
+      expiresIn: '7d',
+    });
+
     res.json({
       message: 'Đăng nhập thành công',
+      token,
       userId: user._id,
       user: {
         tenDangNhap: user.tenDangNhap,
@@ -118,10 +156,14 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Lấy thông tin người dùng
-router.get('/:userId', async (req, res) => {
+// Lấy thông tin người dùng qua ID
+router.get('/:userId', authenticate, async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log('GET /users/:userId:', userId);
+    if (userId !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
     const user = await User.findById(userId).select('-matKhau');
     if (!user) {
       return res.status(404).json({ message: 'Không tìm thấy người dùng' });
@@ -133,12 +175,27 @@ router.get('/:userId', async (req, res) => {
   }
 });
 
+// Lấy thông tin người dùng hiện tại
+router.get('/me', authenticate, async (req, res) => {
+  try {
+    console.log('GET /users/me:', req.user._id);
+    res.json({ user: req.user });
+  } catch (error) {
+    console.error('Get current user error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
 // Cập nhật thông tin
-router.put('/:userId', upload.single('anhDaiDien'), async (req, res) => {
+router.put('/:userId', authenticate, upload.single('anhDaiDien'), async (req, res) => {
   try {
     const { userId } = req.params;
     const { email, hoTen, ngaySinh, gioiTinh, matKhau } = req.body;
+    console.log('PUT /users/:userId:', { userId, email, hoTen });
 
+    if (userId !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'Không tìm thấy người dùng' });
@@ -185,7 +242,7 @@ router.put('/:userId', upload.single('anhDaiDien'), async (req, res) => {
     }
 
     if (req.file) {
-      user.anhDaiDien = `/uploads/${req.file.filename}`;
+      user.anhDaiDien = `/Uploads/${req.file.filename}`;
     }
 
     await user.save();

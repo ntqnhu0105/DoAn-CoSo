@@ -1,30 +1,22 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { AuthContext } from '../context/AuthContext';
 
 const Login = () => {
   const [tenDangNhap, setTenDangNhap] = useState('');
   const [matKhau, setMatKhau] = useState('');
   const [error, setError] = useState('');
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/users/login`, {
-        tenDangNhap,
-        matKhau,
-      });
-      localStorage.setItem('userId', res.data.userId);
-      localStorage.setItem('userName', res.data.user.hoTen);
-      localStorage.setItem('email', res.data.user.email);
-      localStorage.setItem('ngaySinh', res.data.user.ngaySinh || '');
-      localStorage.setItem('gioiTinh', res.data.user.gioiTinh || '');
-      localStorage.setItem('anhDaiDien', res.data.user.anhDaiDien || '');
+      await login(tenDangNhap, matKhau); // Gọi hàm login từ AuthContext
       setError('');
-      toast.success(res.data.message);
+      toast.success('Đăng nhập thành công!');
       navigate('/dashboard');
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Đăng nhập thất bại';

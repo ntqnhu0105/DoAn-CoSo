@@ -60,6 +60,7 @@ const Navbar = () => {
     localStorage.removeItem('ngaySinh');
     localStorage.removeItem('gioiTinh');
     localStorage.removeItem('anhDaiDien');
+    localStorage.removeItem('token'); // Thêm để xóa token
     navigate('/');
     toast.success('Đăng xuất thành công!');
   };
@@ -74,7 +75,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to="/overview" className="flex items-center space-x-2 transition-transform duration-300 hover:scale-105">
               <svg className="h-8 w-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zm0-4c-4.418 0-8 3.582-8 8 8 8 8-3.582 8-8-3.582-8-8-8z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               <span className="text-xl font-bold text-gray-900">ViSmart</span>
             </Link>
@@ -82,7 +83,6 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             {userId ? (
               <>
-                {/* Tổng quan */}
                 <Link
                   to="/overview"
                   className={`text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 px-3 py-2 rounded-md transition-all duration-300 ${
@@ -91,8 +91,6 @@ const Navbar = () => {
                 >
                   Tổng quan
                 </Link>
-
-                {/* Dropdown for Tài chính */}
                 <div className="relative">
                   <button
                     onClick={() => setShowFinanceDropdown(!showFinanceDropdown)}
@@ -127,8 +125,6 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Dropdown for Mục tiêu */}
                 <div className="relative">
                   <button
                     onClick={() => setShowGoalsDropdown(!showGoalsDropdown)}
@@ -161,8 +157,6 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Đầu tư (riêng) */}
                 <Link
                   to="/investments"
                   className={`text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 px-3 py-2 rounded-md transition-all duration-300 ${
@@ -171,8 +165,6 @@ const Navbar = () => {
                 >
                   Đầu tư
                 </Link>
-
-                {/* Báo cáo (riêng) */}
                 <Link
                   to="/reports"
                   className={`text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 px-3 py-2 rounded-md transition-all duration-300 ${
@@ -181,8 +173,6 @@ const Navbar = () => {
                 >
                   Báo cáo
                 </Link>
-
-                {/* Notifications */}
                 <div className="relative">
                   <button
                     onClick={() => setShowNotifications(!showNotifications)}
@@ -234,8 +224,6 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
-
-                {/* User Menu */}
                 <div className="relative">
                   <button
                     onClick={() => setShowMenu(!showMenu)}
@@ -307,7 +295,6 @@ const Navbar = () => {
           <div className="px-4 py-3 space-y-2">
             {userId ? (
               <>
-                {/* Tổng quan for mobile */}
                 <Link
                   to="/overview"
                   className={`block px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all duration-300 ${
@@ -317,8 +304,6 @@ const Navbar = () => {
                 >
                   Tổng quan
                 </Link>
-
-                {/* Tài chính group for mobile */}
                 <div>
                   <button
                     onClick={() => setShowFinanceDropdown(!showFinanceDropdown)}
@@ -351,8 +336,6 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Mục tiêu group for mobile */}
                 <div>
                   <button
                     onClick={() => setShowGoalsDropdown(!showGoalsDropdown)}
@@ -383,8 +366,6 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Đầu tư for mobile */}
                 <Link
                   to="/investments"
                   className={`block px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all duration-300 ${
@@ -394,9 +375,7 @@ const Navbar = () => {
                 >
                   Đầu tư
                 </Link>
-
-                {/* Báo cáo for mobile */}
-                <Link
+                <Link 
                   to="/reports"
                   className={`block px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all duration-300 ${
                     location.pathname === '/reports' ? 'text-emerald-600 bg-emerald-50 font-semibold' : ''
@@ -405,7 +384,6 @@ const Navbar = () => {
                 >
                   Báo cáo
                 </Link>
-
                 <Link
                   to="/settings"
                   className="block px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all duration-300"
