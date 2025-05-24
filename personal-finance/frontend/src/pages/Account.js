@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Account = () => {
   const [accounts, setAccounts] = useState([]);
@@ -8,47 +8,91 @@ const Account = () => {
   const [soDu, setSoDu] = useState('');
   const [loaiTaiKhoan, setLoaiTaiKhoan] = useState('Tiền mặt');
   const [error, setError] = useState('');
-  const userId = localStorage.getItem('userId');
+  const userId = localStorage.getItem('userId')?.replace(/[^\w-]/g, '');
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
-  // Kiểm tra userId
+  // Kiểm tra userId và token
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !token) {
+      setError('Vui lòng đăng nhập để quản lý tài khoản');
       navigate('/');
     }
-  }, [userId, navigate]);
+  }, [userId, token, navigate]);
 
   // Lấy danh sách tài khoản
   useEffect(() => {
+    if (!userId || !token) return;
+
     const fetchAccounts = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/accounts/${userId}`);
+        console.log('Fetching accounts with userId:', userId, 'token:', token.slice(0, 10) + '...');
+        const headers = { Authorization: `Bearer ${token}` };
+        console.log('Request headers:', headers);
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/accounts/${userId}`, { headers });
+        console.log('Accounts response:', res.data);
         setAccounts(res.data);
         setError('');
       } catch (err) {
-        setError(err.response?.data?.message || 'Lỗi khi tải tài khoản');
+        console.error('Lỗi tải tài khoản:', {
+          status: err.response?.status,
+          data: err.response?.data,
+          message: err.message,
+        });
+        const errorMessage = err.response?.data?.message || 'Lỗi khi tải tài khoản';
+        setError(errorMessage);
+        if (err.response?.status === 401) {
+          console.error('Phiên đăng nhập hết hạn, xóa localStorage');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          navigate('/');
+        }
       }
     };
-    if (userId) fetchAccounts();
-  }, [userId]);
+    fetchAccounts();
+  }, [userId, token, navigate]);
 
   // Thêm tài khoản mới
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!userId || !token) {
+      setError('Vui lòng đăng nhập để thực hiện thao tác này');
+      return;
+    }
+
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/accounts`, {
-        maNguoiDung: userId,
-        tenTaiKhoan,
-        soDu: parseFloat(soDu) || 0,
-        loaiTaiKhoan,
-      });
+      const headers = { Authorization: `Bearer ${token}` };
+      console.log('Submitting account:', { maNguoiDung: userId, tenTaiKhoan, soDu, loaiTaiKhoan });
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/accounts`,
+        {
+          maNguoiDung: userId,
+          tenTaiKhoan,
+          soDu: parseFloat(soDu) || 0,
+          loaiTaiKhoan,
+        },
+        { headers }
+      );
+      console.log('Create account response:', res.data);
       setAccounts([...accounts, res.data]);
       setTenTaiKhoan('');
       setSoDu('');
       setLoaiTaiKhoan('Tiền mặt');
       setError('');
     } catch (err) {
-      setError(err.response?.data?.message || 'Lỗi khi thêm tài khoản');
+      console.error('Lỗi thêm tài khoản:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
+      const errorMessage = err.response?.data?.message || 'Lỗi khi thêm tài khoản';
+      setError(errorMessage);
+      if (err.response?.status === 401) {
+        console.error('Phiên đăng nhập hết hạn, xóa localStorage');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        navigate('/');
+      }
     }
   };
 

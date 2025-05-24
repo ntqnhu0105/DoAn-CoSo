@@ -2,14 +2,48 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { Transaction, User, Account, Category } = require('../models');
-const { generateReport } = require('../cron/updateReport'); // Import hàm generateReport
+const jwt = require('jsonwebtoken');
+const { generateReport } = require('../cron/updateReport');
+const { createNotification } = require('./notificationRoutes');
+
+// Middleware xác thực JWT
+const authenticate = async (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    console.error('Không có token trong header Authorization');
+    return res.status(401).json({ message: 'Không có token, truy cập bị từ chối' });
+  }
+  try {
+    console.log('Verifying token:', token.slice(0, 10) + '...');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+    console.log('Decoded JWT:', decoded);
+    const user = await User.findById(decoded.userId).select('-matKhau');
+    if (!user) {
+      console.error('Người dùng không tồn tại:', decoded.userId);
+      return res.status(401).json({ message: 'Người dùng không tồn tại' });
+    }
+    console.log('User found:', user._id);
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('JWT error:', error.message);
+    return res.status(401).json({ message: 'Token không hợp lệ', error: error.message });
+  }
+};
 
 // Thêm giao dịch mới và cập nhật số dư tài khoản
-router.post('/', async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai, ghiChu, phuongThucThanhToan, ngayGiaoDich } = req.body;
+    console.log('POST /transactions:', { maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai });
+
+    if (maNguoiDung !== req.user._id.toString()) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
 
     if (!maNguoiDung || !maTaiKhoan || !maDanhMuc || !soTien || !loai) {
       await session.abortTransaction();
@@ -77,14 +111,21 @@ router.post('/', async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    // Cập nhật báo cáo sau khi giao dịch thành công
+    // Gửi thông báo
+    try {
+      const io = req.app.get('io');
+      await createNotification(io, maNguoiDung, `Giao dịch mới: ${loai} ${soTien} VND`, 'Giao dịch');
+    } catch (notificationError) {
+      console.error('Lỗi khi gửi thông báo:', notificationError);
+    }
+
+    // Cập nhật báo cáo
     const transactionDate = new Date(transaction.ngayGiaoDich);
     try {
       await generateReport(maNguoiDung, transactionDate.getMonth() + 1, transactionDate.getFullYear());
       console.log(`Đã cập nhật báo cáo cho tháng ${transactionDate.getMonth() + 1}/${transactionDate.getFullYear()}`);
     } catch (reportError) {
       console.error('Lỗi khi cập nhật báo cáo:', reportError);
-      // Không trả về lỗi để tránh làm thất bại giao dịch chính
     }
 
     res.status(201).json(transaction);
@@ -97,12 +138,19 @@ router.post('/', async (req, res) => {
 });
 
 // Sửa giao dịch và cập nhật số dư tài khoản
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticate, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { id } = req.params;
     const { maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai, ghiChu, phuongThucThanhToan, ngayGiaoDich } = req.body;
+    console.log('PUT /transactions/:id:', { id, maNguoiDung, maTaiKhoan, maDanhMuc, soTien, loai });
+
+    if (maNguoiDung !== req.user._id.toString()) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
 
     const transaction = await Transaction.findById(id).session(session);
     if (!transaction) {
@@ -190,7 +238,15 @@ router.put('/:id', async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    // Cập nhật báo cáo sau khi sửa giao dịch
+    // Gửi thông báo
+    try {
+      const io = req.app.get('io');
+      await createNotification(io, maNguoiDung, `Giao dịch đã sửa: ${newLoai} ${newSoTien} VND`, 'Giao dịch');
+    } catch (notificationError) {
+      console.error('Lỗi khi gửi thông báo:', notificationError);
+    }
+
+    // Cập nhật báo cáo
     const newDate = new Date(transaction.ngayGiaoDich);
     try {
       await generateReport(maNguoiDung, oldDate.getMonth() + 1, oldDate.getFullYear());
@@ -203,7 +259,6 @@ router.put('/:id', async (req, res) => {
                     : ''));
     } catch (reportError) {
       console.error('Lỗi khi cập nhật báo cáo:', reportError);
-      // Không trả về lỗi để tránh làm thất bại giao dịch chính
     }
 
     res.json(transaction);
@@ -216,17 +271,23 @@ router.put('/:id', async (req, res) => {
 });
 
 // Xóa giao dịch và hoàn tác số dư tài khoản
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { id } = req.params;
-
+    console.log('DELETE /transactions/:id:', id);
     const transaction = await Transaction.findById(id).session(session);
     if (!transaction) {
       await session.abortTransaction();
       session.endSession();
       return res.status(404).json({ message: 'Giao dịch không tồn tại' });
+    }
+
+    if (transaction.maNguoiDung.toString() !== req.user._id.toString()) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
     }
 
     const account = await Account.findById(transaction.maTaiKhoan).session(session);
@@ -250,13 +311,20 @@ router.delete('/:id', async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    // Cập nhật báo cáo sau khi xóa giao dịch
+    // Gửi thông báo
+    try {
+      const io = req.app.get('io');
+      await createNotification(io, userId.toString(), `Giao dịch đã xóa: ${transaction.loai} ${transaction.soTien} VND`, 'Giao dịch');
+    } catch (notificationError) {
+      console.error('Lỗi khi gửi thông báo:', notificationError);
+    }
+
+    // Cập nhật báo cáo
     try {
       await generateReport(userId, transactionDate.getMonth() + 1, transactionDate.getFullYear());
       console.log(`Đã cập nhật báo cáo cho tháng ${transactionDate.getMonth() + 1}/${transactionDate.getFullYear()}`);
     } catch (reportError) {
       console.error('Lỗi khi cập nhật báo cáo:', reportError);
-      // Không trả về lỗi để tránh làm thất bại giao dịch chính
     }
 
     console.log('Transaction deleted:', id);
@@ -271,9 +339,13 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Lấy danh sách giao dịch
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', authenticate, async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log('GET /transactions/:userId:', userId);
+    if (userId !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'Người dùng không tồn tại' });

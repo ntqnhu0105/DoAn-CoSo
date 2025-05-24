@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Category = () => {
   const [categories, setCategories] = useState([]);
@@ -8,40 +9,78 @@ const Category = () => {
   const [moTa, setMoTa] = useState('');
   const [error, setError] = useState('');
   const [editId, setEditId] = useState(null);
+  const navigate = useNavigate();
+
+  // Lấy token từ localStorage
+  const token = localStorage.getItem('token');
+
+  // Kiểm tra token
+  useEffect(() => {
+    if (!token) {
+      setError('Vui lòng đăng nhập để quản lý danh mục');
+      navigate('/');
+    }
+  }, [token, navigate]);
 
   // Lấy danh sách danh mục
   useEffect(() => {
+    if (!token) return;
+
     const fetchCategories = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/categories`);
+        console.log('Fetching categories with token:', token.slice(0, 10) + '...');
+        const headers = { Authorization: `Bearer ${token}` };
+        console.log('Request headers:', headers);
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/categories`, { headers });
+        console.log('Categories response:', res.data);
         setCategories(res.data);
+        setError('');
       } catch (err) {
+        console.error('Lỗi tải danh mục:', {
+          status: err.response?.status,
+          data: err.response?.data,
+          message: err.message,
+        });
         setError(err.response?.data?.message || 'Lỗi khi tải danh mục');
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          navigate('/');
+        }
       }
     };
     fetchCategories();
-  }, []);
+  }, [token, navigate]);
 
   // Thêm hoặc cập nhật danh mục
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!token) {
+      setError('Vui lòng đăng nhập để thực hiện thao tác này');
+      return;
+    }
+
     try {
+      const headers = { Authorization: `Bearer ${token}` };
+      console.log('Submitting category:', { tenDanhMuc, loai, moTa, editId });
       if (editId) {
         // Cập nhật danh mục
-        const res = await axios.put(`${process.env.REACT_APP_API_URL}/categories/${editId}`, {
-          tenDanhMuc,
-          loai,
-          moTa,
-        });
+        const res = await axios.put(
+          `${process.env.REACT_APP_API_URL}/categories/${editId}`,
+          { tenDanhMuc, loai, moTa },
+          { headers }
+        );
+        console.log('Update category response:', res.data);
         setCategories(categories.map((cat) => (cat._id === editId ? res.data.category : cat)));
         setEditId(null);
       } else {
         // Thêm danh mục mới
-        const res = await axios.post(`${process.env.REACT_APP_API_URL}/categories`, {
-          tenDanhMuc,
-          loai,
-          moTa,
-        });
+        const res = await axios.post(
+          `${process.env.REACT_APP_API_URL}/categories`,
+          { tenDanhMuc, loai, moTa },
+          { headers }
+        );
+        console.log('Create category response:', res.data);
         setCategories([...categories, res.data.category]);
       }
       setTenDanhMuc('');
@@ -49,17 +88,46 @@ const Category = () => {
       setMoTa('');
       setError('');
     } catch (err) {
+      console.error('Lỗi lưu danh mục:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
       setError(err.response?.data?.message || 'Lỗi khi lưu danh mục');
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        navigate('/');
+      }
     }
   };
 
   // Xóa danh mục
   const handleDelete = async (id) => {
+    if (!token) {
+      setError('Vui lòng đăng nhập để thực hiện thao tác này');
+      return;
+    }
+
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/categories/${id}`);
+      const headers = { Authorization: `Bearer ${token}` };
+      console.log('Deleting category:', id);
+      await axios.delete(`${process.env.REACT_APP_API_URL}/categories/${id}`, { headers });
+      console.log('Category deleted:', id);
       setCategories(categories.filter((cat) => cat._id !== id));
+      setError('');
     } catch (err) {
+      console.error('Lỗi xóa danh mục:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
       setError(err.response?.data?.message || 'Lỗi khi xóa danh mục');
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        navigate('/');
+      }
     }
   };
 
