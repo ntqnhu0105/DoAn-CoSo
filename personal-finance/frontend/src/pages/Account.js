@@ -136,7 +136,7 @@ const Account = () => {
               >
                 <option value="Tiền mặt">Tiền mặt</option>
                 <option value="Thẻ tín dụng">Thẻ tín dụng</option>
-                <option value="Tài khoản ngân hàng">Tài khoản ngân hàng</option>
+                <option value="Ngân hàng">Ngân hàng</option>
                 <option value="Ví điện tử">Ví điện tử</option>
               </select>
             </div>
