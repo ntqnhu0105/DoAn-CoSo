@@ -72,7 +72,7 @@ router.post('/', authenticate, async (req, res) => {
     await account.save();
     res.status(201).json(account);
   } catch (error) {
-    console.error('Create account error:', error.message);
+    console.error('Create account error:', error);
     res.status(500).json({ message: 'Lỗi server khi tạo tài khoản', error: error.message });
   }
 });
