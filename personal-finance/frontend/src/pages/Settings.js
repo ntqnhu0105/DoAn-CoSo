@@ -17,25 +17,53 @@ const Settings = () => {
   const [matKhau, setMatKhau] = useState('');
   const [error, setError] = useState('');
   const userId = localStorage.getItem('userId');
+  const token = localStorage.getItem('token'); // Lấy token từ localStorage
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !token) {
+      setError('Vui lòng đăng nhập để truy cập cài đặt');
+      toast.error('Vui lòng đăng nhập để tiếp tục');
       navigate('/');
-    } else {
-      const fetchUserData = async () => {
-        try {
-          const res = await axios.get(`${process.env.REACT_APP_API_URL}/users/${userId}`);
-          setTenDangNhap(res.data.user.tenDangNhap);
-          setCurrentAnhDaiDien(res.data.user.anhDaiDien || '');
-          localStorage.setItem('anhDaiDien', res.data.user.anhDaiDien || '');
-        } catch (err) {
-          toast.error('Lỗi khi tải thông tin người dùng');
-        }
-      };
-      fetchUserData();
+      return;
     }
-  }, [userId, navigate]);
+
+    const fetchUserData = async () => {
+      try {
+        const headers = { Authorization: `Bearer ${token}` }; // Thêm header Authorization
+        console.log('Fetching user data with userId:', userId, 'token:', token.slice(0, 10) + '...');
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/users/${userId}`, { headers });
+        console.log('User data response:', res.data);
+        setTenDangNhap(res.data.user.tenDangNhap);
+        setEmail(res.data.user.email);
+        setHoTen(res.data.user.hoTen);
+        setNgaySinh(res.data.user.ngaySinh ? new Date(res.data.user.ngaySinh).toISOString().split('T')[0] : '');
+        setGioiTinh(res.data.user.gioiTinh || '');
+        setCurrentAnhDaiDien(res.data.user.anhDaiDien || '');
+        localStorage.setItem('email', res.data.user.email);
+        localStorage.setItem('userName', res.data.user.hoTen);
+        localStorage.setItem('ngaySinh', res.data.user.ngaySinh || '');
+        localStorage.setItem('gioiTinh', res.data.user.gioiTinh || '');
+        localStorage.setItem('anhDaiDien', res.data.user.anhDaiDien || '');
+      } catch (err) {
+        console.error('Lỗi tải thông tin người dùng:', {
+          status: err.response?.status,
+          data: err.response?.data,
+          message: err.message,
+        });
+        const errorMessage = err.response?.data?.message || 'Lỗi khi tải thông tin người dùng';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        if (err.response?.status === 401) {
+          console.error('Phiên đăng nhập hết hạn, xóa localStorage');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          navigate('/');
+        }
+      }
+    };
+    fetchUserData();
+  }, [userId, token, navigate]);
 
   useEffect(() => {
     console.log('currentAnhDaiDien:', currentAnhDaiDien);
@@ -74,9 +102,9 @@ const Settings = () => {
       if (matKhau) formData.append('matKhau', matKhau);
       if (anhDaiDien) formData.append('anhDaiDien', anhDaiDien);
 
-      const res = await axios.put(`${process.env.REACT_APP_API_URL}/users/${userId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }; // Thêm header Authorization
+      console.log('Submitting update with payload:', { email, hoTen, ngaySinh, gioiTinh, anhDaiDien: !!anhDaiDien });
+      const res = await axios.put(`${process.env.REACT_APP_API_URL}/users/${userId}`, formData, { headers });
 
       localStorage.setItem('email', res.data.user.email);
       localStorage.setItem('userName', res.data.user.hoTen);
@@ -90,9 +118,20 @@ const Settings = () => {
       setError('');
       toast.success(res.data.message);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Cập nhật thông tin thất bại';
+      console.error('Lỗi cập nhật thông tin:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
+      const errorMessage = err.response?.data?.message || 'Cập nhật thông tin thất bại';
       setError(errorMessage);
       toast.error(errorMessage);
+      if (err.response?.status === 401) {
+        console.error('Phiên đăng nhập hết hạn, xóa localStorage');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        navigate('/');
+      }
     }
   };
 
