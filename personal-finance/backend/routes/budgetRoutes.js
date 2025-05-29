@@ -2,12 +2,41 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { Budget, User, Category } = require('../models');
+const jwt = require('jsonwebtoken');
+
+// Middleware xác thực JWT
+const authenticate = async (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    console.error('Không có token trong header Authorization');
+    return res.status(401).json({ message: 'Không có token, truy cập bị từ chối' });
+  }
+  try {
+    console.log('Verifying token:', token.slice(0, 10) + '...');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+    console.log('Decoded JWT:', decoded);
+    const user = await User.findById(decoded.userId).select('-matKhau');
+    if (!user) {
+      console.error('Người dùng không tồn tại:', decoded.userId);
+      return res.status(401).json({ message: 'Người dùng không tồn tại' });
+    }
+    console.log('User found:', user._id);
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('JWT error:', error);
+    return res.status(401).json({ message: 'Token không hợp lệ', error: error.message });
+  }
+};
 
 // Middleware kiểm tra userId và maDanhMuc hợp lệ
 const verifyUserAndCategory = async (req, res, next) => {
   const { userId, maDanhMuc } = req.body;
   if (!userId || !maDanhMuc) {
     return res.status(400).json({ message: 'Vui lòng cung cấp userId và maDanhMuc' });
+  }
+  if (userId !== req.user._id.toString()) {
+    return res.status(403).json({ message: 'Không có quyền truy cập' });
   }
   try {
     const user = await User.findById(userId);
@@ -28,7 +57,7 @@ const verifyUserAndCategory = async (req, res, next) => {
 };
 
 // Tạo ngân sách mới
-router.post('/', verifyUserAndCategory, async (req, res) => {
+router.post('/', authenticate, verifyUserAndCategory, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -76,9 +105,12 @@ router.post('/', verifyUserAndCategory, async (req, res) => {
 });
 
 // Lấy danh sách ngân sách của người dùng
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', authenticate, async (req, res) => {
   try {
     const { userId } = req.params;
+    if (userId !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
+    }
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'Người dùng không tồn tại' });
@@ -92,7 +124,7 @@ router.get('/:userId', async (req, res) => {
 });
 
 // Cập nhật ngân sách
-router.put('/:id', verifyUserAndCategory, async (req, res) => {
+router.put('/:id', authenticate, verifyUserAndCategory, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -149,7 +181,7 @@ router.put('/:id', verifyUserAndCategory, async (req, res) => {
 });
 
 // Xóa ngân sách
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -160,6 +192,12 @@ router.delete('/:id', async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({ message: 'Vui lòng cung cấp userId' });
+    }
+
+    if (userId !== req.user._id.toString()) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ message: 'Không có quyền truy cập' });
     }
 
     const budget = await Budget.findById(id).session(session);

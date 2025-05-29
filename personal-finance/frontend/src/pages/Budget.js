@@ -17,21 +17,30 @@ const Budget = () => {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(true);
   const userId = localStorage.getItem('userId');
+  const token = localStorage.getItem('token'); // Lấy token từ localStorage
   const navigate = useNavigate();
 
+  // Kiểm tra userId và token
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !token) {
+      setError('Vui lòng đăng nhập để quản lý ngân sách');
+      toast.error('Vui lòng đăng nhập để tiếp tục');
       navigate('/');
     }
-  }, [userId, navigate]);
+  }, [userId, token, navigate]);
 
+  // Lấy danh sách ngân sách và danh mục
   useEffect(() => {
+    if (!userId || !token) return;
+
     const fetchData = async () => {
       setLoading(true);
       try {
+        const headers = { Authorization: `Bearer ${token}` }; // Thêm header Authorization
+        console.log('Fetching budgets with userId:', userId, 'token:', token.slice(0, 10) + '...');
         const [budgetRes, categoryRes] = await Promise.all([
-          axios.get(`${process.env.REACT_APP_API_URL}/budgets/${userId}`),
-          axios.get(`${process.env.REACT_APP_API_URL}/categories`),
+          axios.get(`${process.env.REACT_APP_API_URL}/budgets/${userId}`, { headers }),
+          axios.get(`${process.env.REACT_APP_API_URL}/categories`, { headers }),
         ]);
         const newBudgets = budgetRes.data;
         setBudgets(newBudgets);
@@ -53,18 +62,35 @@ const Budget = () => {
           }
         });
       } catch (err) {
+        console.error('Lỗi tải dữ liệu:', {
+          status: err.response?.status,
+          data: err.response?.data,
+          message: err.message,
+        });
         const errorMessage = err.response?.data?.message || 'Lỗi khi tải dữ liệu';
         setError(errorMessage);
         toast.error(errorMessage);
+        if (err.response?.status === 401) {
+          console.error('Phiên đăng nhập hết hạn, xóa localStorage');
+          localStorage.removeItem('token');
+          localStorage.removeItem('userId');
+          navigate('/');
+        }
       } finally {
         setLoading(false);
       }
     };
-    if (userId) fetchData();
-  }, [userId]);
+    fetchData();
+  }, [userId, token, navigate]);
 
+  // Thêm hoặc cập nhật ngân sách
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!userId || !token) {
+      setError('Vui lòng đăng nhập để thực hiện thao tác này');
+      toast.error('Vui lòng đăng nhập để tiếp tục');
+      return;
+    }
     if (!maDanhMuc || !soTien || !ngayBatDau || !ngayKetThuc) {
       setError('Vui lòng nhập đầy đủ danh mục, số tiền, ngày bắt đầu và ngày kết thúc');
       toast.error('Vui lòng nhập đầy đủ thông tin');
@@ -90,6 +116,7 @@ const Budget = () => {
     }
 
     try {
+      const headers = { Authorization: `Bearer ${token}` }; // Thêm header Authorization
       const payload = {
         userId,
         maDanhMuc,
@@ -99,13 +126,14 @@ const Budget = () => {
         ghiChu,
         trangThai,
       };
+      console.log('Payload gửi đi:', payload);
       let res;
       if (editId) {
-        res = await axios.put(`${process.env.REACT_APP_API_URL}/budgets/${editId}`, payload);
+        res = await axios.put(`${process.env.REACT_APP_API_URL}/budgets/${editId}`, payload, { headers });
         setBudgets(budgets.map((bud) => (bud._id === editId ? res.data.budget : bud)));
         toast.success('Cập nhật ngân sách thành công!');
       } else {
-        res = await axios.post(`${process.env.REACT_APP_API_URL}/budgets`, payload);
+        res = await axios.post(`${process.env.REACT_APP_API_URL}/budgets`, payload, { headers });
         setBudgets([...budgets, res.data.budget]);
         toast.success('Thêm ngân sách thành công!');
       }
@@ -118,22 +146,46 @@ const Budget = () => {
       setEditId(null);
       setError('');
     } catch (err) {
+      console.error('Lỗi lưu ngân sách:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
       const errorMessage = err.response?.data?.message || 'Lỗi khi lưu ngân sách';
       setError(errorMessage);
       toast.error(errorMessage);
+      if (err.response?.status === 401) {
+        console.error('Phiên đăng nhập hết hạn, xóa localStorage');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        navigate('/');
+      }
     }
   };
 
+  // Xóa ngân sách
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa ngân sách này?')) return;
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/budgets/${id}?userId=${userId}`);
+      const headers = { Authorization: `Bearer ${token}` }; // Thêm header Authorization
+      await axios.delete(`${process.env.REACT_APP_API_URL}/budgets/${id}?userId=${userId}`, { headers });
       setBudgets(budgets.filter((bud) => bud._id !== id));
       toast.success('Xóa ngân sách thành công!');
     } catch (err) {
+      console.error('Lỗi xóa ngân sách:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
       const errorMessage = err.response?.data?.message || 'Lỗi khi xóa ngân sách';
       setError(errorMessage);
       toast.error(errorMessage);
+      if (err.response?.status === 401) {
+        console.error('Phiên đăng nhập hết hạn, xóa localStorage');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        navigate('/');
+      }
     }
   };
 
