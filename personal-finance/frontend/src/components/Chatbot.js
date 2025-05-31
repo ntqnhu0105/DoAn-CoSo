@@ -5,6 +5,7 @@ import io from "socket.io-client"
 import { AuthContext } from "../context/AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
 import axios from "axios"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   ChatBubbleLeftRightIcon,
   XMarkIcon,
@@ -15,6 +16,7 @@ import {
   TagIcon,
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline"
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from "chart.js"
 
 const socket = io("http://localhost:5000", { autoConnect: false })
 
@@ -187,186 +189,172 @@ const Chatbot = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {/* Chat Toggle Button */}
-      <button
+      <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className={`group relative bg-gradient-to-r from-emerald-500 to-blue-600 text-white p-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110 ${
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className={`group relative bg-gradient-to-r from-emerald-500 to-blue-600 text-white p-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 ${
           isOpen ? "rotate-180" : ""
         }`}
       >
-        {isOpen ? (
-          <XMarkIcon className="h-6 w-6 transition-transform duration-300" />
-        ) : (
-          <ChatBubbleLeftRightIcon className="h-6 w-6 transition-transform duration-300" />
-        )}
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }}>
+          {isOpen ? <XMarkIcon className="h-6 w-6" /> : <ChatBubbleLeftRightIcon className="h-6 w-6" />}
+        </motion.div>
 
         {/* Notification Badge */}
-        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+        <motion.div
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
+          className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-lg"
+        >
           <SparklesIcon className="h-3 w-3" />
-        </div>
-      </button>
+        </motion.div>
+      </motion.button>
 
       {/* Chat Window */}
-      {isOpen && (
-        <div className="absolute bottom-16 right-0 w-96 h-[32rem] bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-100/50 flex flex-col overflow-hidden transform transition-all duration-300 ease-out animate-in slide-in-from-bottom-4">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-500 to-blue-600 p-6 rounded-t-3xl">
-            <div className="flex items-center space-x-3">
-              <div className="bg-white/20 p-2 rounded-full">
-                <SparklesIcon className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">Trợ Lý Chi Tiêu </h3>
-                <p className="text-white/80 text-sm">Luôn sẵn sàng hỗ trợ bạn</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Messages Container */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-gradient-to-b from-gray-50/50 to-white/50">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex ${msg.isBot ? "justify-start" : "justify-end"} animate-in slide-in-from-bottom-2`}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div
-                  className={`max-w-[85%] p-4 rounded-2xl shadow-sm ${
-                    msg.isBot
-                      ? "bg-white border border-gray-100 text-gray-800 rounded-bl-md"
-                      : "bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-br-md"
-                  }`}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="absolute bottom-16 right-0 w-96 h-[32rem] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 flex flex-col overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-emerald-500 to-blue-600 p-6 rounded-t-3xl">
+              <div className="flex items-center space-x-3">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                  className="bg-white/20 p-2 rounded-full"
                 >
-                  <p className="text-sm leading-relaxed">{msg.text}</p>
-                  <p className={`text-xs mt-2 ${msg.isBot ? "text-gray-500" : "text-white/70"}`}>
-                    {formatTime(msg.timestamp)}
-                  </p>
+                  <SparklesIcon className="h-6 w-6 text-white" />
+                </motion.div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Trợ Lý Chi Tiêu</h3>
+                  <p className="text-white/80 text-sm">Luôn sẵn sàng hỗ trợ bạn</p>
                 </div>
               </div>
-            ))}
+            </div>
 
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex justify-start animate-in slide-in-from-bottom-2">
-                <div className="bg-white border border-gray-100 p-4 rounded-2xl rounded-bl-md shadow-sm">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+            {/* Messages Container */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-gradient-to-b from-gray-50/50 to-white/50">
+              <AnimatePresence>
+                {messages.map((msg, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className={`flex ${msg.isBot ? "justify-start" : "justify-end"}`}
+                  >
                     <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
+                      className={`max-w-[85%] p-4 rounded-2xl shadow-sm backdrop-blur-sm ${
+                        msg.isBot
+                          ? "bg-white/80 border border-gray-100/50 text-gray-800 rounded-bl-md"
+                          : "bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-br-md"
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed">{msg.text}</p>
+                      <p className={`text-xs mt-2 ${msg.isBot ? "text-gray-500" : "text-white/70"}`}>
+                        {formatTime(msg.timestamp)}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {/* Typing Indicator */}
+              <AnimatePresence>
+                {isTyping && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="flex justify-start"
+                  >
+                    <div className="bg-white/80 backdrop-blur-sm border border-gray-100/50 p-4 rounded-2xl rounded-bl-md shadow-sm">
+                      <div className="flex space-x-1">
+                        {[0, 1, 2].map((i) => (
+                          <motion.div
+                            key={i}
+                            animate={{ y: [0, -8, 0] }}
+                            transition={{
+                              duration: 0.6,
+                              repeat: Number.POSITIVE_INFINITY,
+                              delay: i * 0.2,
+                            }}
+                            className="w-2 h-2 bg-gray-400 rounded-full"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Quick Suggestions */}
+            <div className="p-4 border-t border-gray-100/50 bg-white/80 backdrop-blur-sm">
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {suggestions.map((suggestion, index) => {
+                  const IconComponent = suggestion.icon
+                  const colorClasses = {
+                    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+                    blue: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+                    purple: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100",
+                    orange: "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100",
+                  }
+
+                  return (
+                    <motion.button
+                      key={index}
+                      onClick={() => handleSuggestion(suggestion.command)}
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex items-center space-x-2 p-3 rounded-xl border transition-all duration-200 shadow-sm backdrop-blur-sm ${
+                        colorClasses[suggestion.color]
+                      }`}
+                    >
+                      <IconComponent className="h-4 w-4" />
+                      <span className="text-xs font-medium">{suggestion.text}</span>
+                    </motion.button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Input Area */}
+            <div className="p-4 bg-white/90 backdrop-blur-sm border-t border-gray-100/50 rounded-b-3xl">
+              <div className="flex space-x-3">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Nhập lệnh hoặc câu hỏi..."
+                    className="w-full p-4 pr-12 border border-gray-200/50 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 bg-white/80 backdrop-blur-sm text-gray-800 placeholder-gray-500"
+                    onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                  />
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                    <SparklesIcon className="h-5 w-5 text-gray-400" />
                   </div>
                 </div>
+                <motion.button
+                  onClick={sendMessage}
+                  disabled={!input.trim() || isTyping}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-gradient-to-r from-emerald-500 to-blue-600 text-white p-4 rounded-2xl hover:from-emerald-600 hover:to-blue-700 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <PaperAirplaneIcon className="h-5 w-5" />
+                </motion.button>
               </div>
-            )}
-          </div>
-
-          {/* Quick Suggestions */}
-          <div className="p-4 border-t border-gray-100/50 bg-white/80 backdrop-blur-sm">
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {suggestions.map((suggestion, index) => {
-                const IconComponent = suggestion.icon
-                const colorClasses = {
-                  emerald: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
-                  blue: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
-                  purple: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100",
-                  orange: "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100",
-                }
-
-                return (
-                  <button
-                    key={index}
-                    onClick={() => handleSuggestion(suggestion.command)}
-                    className={`flex items-center space-x-2 p-3 rounded-xl border transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5 ${
-                      colorClasses[suggestion.color]
-                    }`}
-                  >
-                    <IconComponent className="h-4 w-4" />
-                    <span className="text-xs font-medium">{suggestion.text}</span>
-                  </button>
-                )
-              })}
             </div>
-          </div>
-
-          {/* Input Area */}
-          <div className="p-4 bg-white/90 backdrop-blur-sm border-t border-gray-100/50 rounded-b-3xl">
-            <div className="flex space-x-3">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Nhập lệnh hoặc câu hỏi..."
-                  className="w-full p-4 pr-12 border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 bg-white/80 backdrop-blur-sm text-gray-800 placeholder-gray-500"
-                  onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                />
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                  <SparklesIcon className="h-5 w-5 text-gray-400" />
-                </div>
-              </div>
-              <button
-                onClick={sendMessage}
-                disabled={!input.trim() || isTyping}
-                className="bg-gradient-to-r from-emerald-500 to-blue-600 text-white p-4 rounded-2xl hover:from-emerald-600 hover:to-blue-700 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 hover:shadow-xl"
-              >
-                <PaperAirplaneIcon className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Custom Styles */}
-      <style jsx>{`
-        @keyframes animate-in {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-in {
-          animation: animate-in 0.3s ease-out;
-        }
-        
-        .slide-in-from-bottom-2 {
-          animation: slide-in-from-bottom-2 0.3s ease-out;
-        }
-        
-        .slide-in-from-bottom-4 {
-          animation: slide-in-from-bottom-4 0.4s ease-out;
-        }
-        
-        @keyframes slide-in-from-bottom-2 {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes slide-in-from-bottom-4 {
-          from {
-            opacity: 0;
-            transform: translateY(16px) scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-      `}</style>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
