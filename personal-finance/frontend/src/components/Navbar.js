@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom"
 import { ToastContainer, toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import axios from "axios"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   HomeIcon,
   CreditCardIcon,
@@ -117,9 +118,13 @@ const Navbar = () => {
                 to="/overview"
                 className="group flex items-center space-x-3 transition-all duration-300 hover:scale-105"
               >
-                <div className="bg-gradient-to-br from-emerald-500 to-blue-600 p-2 rounded-2xl shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <motion.div
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.5 }}
+                  className="bg-gradient-to-br from-emerald-500 to-blue-600 p-2 rounded-2xl shadow-lg group-hover:shadow-xl transition-all duration-300"
+                >
                   <HomeIcon className="h-6 w-6 text-white" />
-                </div>
+                </motion.div>
                 <div className="hidden sm:block">
                   <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
                     ViSmart
@@ -148,124 +153,140 @@ const Navbar = () => {
 
                   {/* Finance Dropdown */}
                   <div className="relative">
-                    <button
+                    <motion.button
                       onClick={() => setShowFinanceDropdown(!showFinanceDropdown)}
+                      whileHover={{ scale: 1.02 }}
                       className="group flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 transition-all duration-300"
                     >
                       <ChartBarIcon className="h-5 w-5" />
                       <span className="font-medium">Tài chính</span>
-                      <ChevronDownIcon
-                        className={`h-4 w-4 transform transition-transform duration-200 ${
-                          showFinanceDropdown ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
+                      <motion.div animate={{ rotate: showFinanceDropdown ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDownIcon className="h-4 w-4" />
+                      </motion.div>
+                    </motion.button>
 
-                    {showFinanceDropdown && (
-                      <div className="absolute left-0 mt-2 w-80 bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/50 z-50 transform transition-all duration-200 ease-out">
-                        <div className="p-2">
-                          <div className="px-4 py-3 border-b border-gray-100">
-                            <h3 className="text-sm font-semibold text-gray-900">Quản lý tài chính</h3>
-                            <p className="text-xs text-gray-500 mt-1">Theo dõi và quản lý chi tiêu của bạn</p>
-                          </div>
-                          <div className="py-2">
-                            {financeMenuItems.map((item) => (
-                              <Link
-                                key={item.to}
-                                to={item.to}
-                                className={`group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                                  location.pathname === item.to
-                                    ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
-                                    : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
-                                }`}
-                                onClick={() => setShowFinanceDropdown(false)}
-                              >
-                                <div
-                                  className={`p-2 rounded-lg ${
+                    <AnimatePresence>
+                      {showFinanceDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute left-0 mt-2 w-80 bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/50 z-50"
+                        >
+                          <div className="p-2">
+                            <div className="px-4 py-3 border-b border-gray-100">
+                              <h3 className="text-sm font-semibold text-gray-900">Quản lý tài chính</h3>
+                              <p className="text-xs text-gray-500 mt-1">Theo dõi và quản lý chi tiêu của bạn</p>
+                            </div>
+                            <div className="py-2">
+                              {financeMenuItems.map((item) => (
+                                <Link
+                                  key={item.to}
+                                  to={item.to}
+                                  className={`group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                                     location.pathname === item.to
-                                      ? "bg-white/20"
-                                      : "bg-gray-100 group-hover:bg-emerald-100"
+                                      ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
+                                      : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
                                   }`}
+                                  onClick={() => setShowFinanceDropdown(false)}
                                 >
-                                  <item.icon className="h-5 w-5" />
-                                </div>
-                                <div>
-                                  <p className="font-medium">{item.label}</p>
-                                  <p
-                                    className={`text-xs ${
-                                      location.pathname === item.to ? "text-white/80" : "text-gray-500"
+                                  <motion.div
+                                    whileHover={{ scale: 1.1 }}
+                                    className={`p-2 rounded-lg ${
+                                      location.pathname === item.to
+                                        ? "bg-white/20"
+                                        : "bg-gray-100 group-hover:bg-emerald-100"
                                     }`}
                                   >
-                                    {item.description}
-                                  </p>
-                                </div>
-                              </Link>
-                            ))}
+                                    <item.icon className="h-5 w-5" />
+                                  </motion.div>
+                                  <div>
+                                    <p className="font-medium">{item.label}</p>
+                                    <p
+                                      className={`text-xs ${
+                                        location.pathname === item.to ? "text-white/80" : "text-gray-500"
+                                      }`}
+                                    >
+                                      {item.description}
+                                    </p>
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Goals Dropdown */}
                   <div className="relative">
-                    <button
+                    <motion.button
                       onClick={() => setShowGoalsDropdown(!showGoalsDropdown)}
+                      whileHover={{ scale: 1.02 }}
                       className="group flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 transition-all duration-300"
                     >
                       <FlagIcon className="h-5 w-5" />
                       <span className="font-medium">Mục tiêu</span>
-                      <ChevronDownIcon
-                        className={`h-4 w-4 transform transition-transform duration-200 ${
-                          showGoalsDropdown ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
+                      <motion.div animate={{ rotate: showGoalsDropdown ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDownIcon className="h-4 w-4" />
+                      </motion.div>
+                    </motion.button>
 
-                    {showGoalsDropdown && (
-                      <div className="absolute left-0 mt-2 w-80 bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/50 z-50 transform transition-all duration-200 ease-out">
-                        <div className="p-2">
-                          <div className="px-4 py-3 border-b border-gray-100">
-                            <h3 className="text-sm font-semibold text-gray-900">Mục tiêu tài chính</h3>
-                            <p className="text-xs text-gray-500 mt-1">Đặt và theo dõi mục tiêu của bạn</p>
-                          </div>
-                          <div className="py-2">
-                            {goalsMenuItems.map((item) => (
-                              <Link
-                                key={item.to}
-                                to={item.to}
-                                className={`group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                                  location.pathname === item.to
-                                    ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
-                                    : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
-                                }`}
-                                onClick={() => setShowGoalsDropdown(false)}
-                              >
-                                <div
-                                  className={`p-2 rounded-lg ${
+                    <AnimatePresence>
+                      {showGoalsDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute left-0 mt-2 w-80 bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/50 z-50"
+                        >
+                          <div className="p-2">
+                            <div className="px-4 py-3 border-b border-gray-100">
+                              <h3 className="text-sm font-semibold text-gray-900">Mục tiêu tài chính</h3>
+                              <p className="text-xs text-gray-500 mt-1">Đặt và theo dõi mục tiêu của bạn</p>
+                            </div>
+                            <div className="py-2">
+                              {goalsMenuItems.map((item) => (
+                                <Link
+                                  key={item.to}
+                                  to={item.to}
+                                  className={`group flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                                     location.pathname === item.to
-                                      ? "bg-white/20"
-                                      : "bg-gray-100 group-hover:bg-emerald-100"
+                                      ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
+                                      : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
                                   }`}
+                                  onClick={() => setShowGoalsDropdown(false)}
                                 >
-                                  <item.icon className="h-5 w-5" />
-                                </div>
-                                <div>
-                                  <p className="font-medium">{item.label}</p>
-                                  <p
-                                    className={`text-xs ${
-                                      location.pathname === item.to ? "text-white/80" : "text-gray-500"
+                                  <motion.div
+                                    whileHover={{ scale: 1.1 }}
+                                    className={`p-2 rounded-lg ${
+                                      location.pathname === item.to
+                                        ? "bg-white/20"
+                                        : "bg-gray-100 group-hover:bg-emerald-100"
                                     }`}
                                   >
-                                    {item.description}
-                                  </p>
-                                </div>
-                              </Link>
-                            ))}
+                                    <item.icon className="h-5 w-5" />
+                                  </motion.div>
+                                  <div>
+                                    <p className="font-medium">{item.label}</p>
+                                    <p
+                                      className={`text-xs ${
+                                        location.pathname === item.to ? "text-white/80" : "text-gray-500"
+                                      }`}
+                                    >
+                                      {item.description}
+                                    </p>
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Investments */}
@@ -310,307 +331,371 @@ const Navbar = () => {
                 <>
                   {/* Notifications */}
                   <div className="relative">
-                    <button
+                    <motion.button
                       onClick={() => setShowNotifications(!showNotifications)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       className="relative p-3 text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 rounded-xl transition-all duration-300"
                     >
                       <BellIcon className="h-6 w-6" />
                       {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse shadow-lg">
+                        <motion.span
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY }}
+                          className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-lg"
+                        >
                           {unreadCount > 9 ? "9+" : unreadCount}
-                        </span>
+                        </motion.span>
                       )}
-                    </button>
+                    </motion.button>
 
-                    {showNotifications && (
-                      <div className="absolute right-0 mt-2 w-96 bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/50 z-50 max-h-96 overflow-hidden">
-                        <div className="p-4 border-b border-gray-100">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900">Thông báo</h3>
-                            {unreadCount > 0 && (
-                              <span className="px-2 py-1 bg-gradient-to-r from-emerald-500 to-blue-600 text-white text-xs rounded-full">
-                                {unreadCount} mới
-                              </span>
-                            )}
+                    <AnimatePresence>
+                      {showNotifications && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute right-0 mt-2 w-96 bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/50 z-50 max-h-96 overflow-hidden"
+                        >
+                          <div className="p-4 border-b border-gray-100">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-lg font-semibold text-gray-900">Thông báo</h3>
+                              {unreadCount > 0 && (
+                                <span className="px-2 py-1 bg-gradient-to-r from-emerald-500 to-blue-600 text-white text-xs rounded-full">
+                                  {unreadCount} mới
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="max-h-80 overflow-y-auto">
-                          {loading ? (
-                            <div className="flex justify-center py-8">
-                              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-600"></div>
-                            </div>
-                          ) : notifications.length === 0 ? (
-                            <div className="text-center py-8">
-                              <BellIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                              <p className="text-gray-500">Chưa có thông báo nào</p>
-                            </div>
-                          ) : (
-                            notifications.map((notif) => (
-                              <div
-                                key={notif._id}
-                                className={`p-4 border-b border-gray-100 last:border-b-0 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 transition-all duration-200 ${
-                                  notif.daDoc ? "opacity-60" : ""
-                                }`}
-                              >
-                                <div className="flex items-start space-x-3">
-                                  <div
-                                    className={`p-2 rounded-lg ${
-                                      notif.daDoc ? "bg-gray-100" : "bg-gradient-to-r from-emerald-500 to-blue-600"
-                                    }`}
-                                  >
-                                    <BellIcon className={`h-4 w-4 ${notif.daDoc ? "text-gray-400" : "text-white"}`} />
-                                  </div>
-                                  <div className="flex-1">
-                                    <p
-                                      className={`text-sm ${
-                                        notif.daDoc ? "text-gray-600" : "text-gray-900 font-medium"
+                          <div className="max-h-80 overflow-y-auto">
+                            {loading ? (
+                              <div className="flex justify-center py-8">
+                                <motion.div
+                                  animate={{ rotate: 360 }}
+                                  transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                                  className="rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-600"
+                                />
+                              </div>
+                            ) : notifications.length === 0 ? (
+                              <div className="text-center py-8">
+                                <BellIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-gray-500">Chưa có thông báo nào</p>
+                              </div>
+                            ) : (
+                              notifications.map((notif) => (
+                                <motion.div
+                                  key={notif._id}
+                                  whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.05)" }}
+                                  className={`p-4 border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
+                                    notif.daDoc ? "opacity-60" : ""
+                                  }`}
+                                >
+                                  <div className="flex items-start space-x-3">
+                                    <motion.div
+                                      whileHover={{ scale: 1.1 }}
+                                      className={`p-2 rounded-lg ${
+                                        notif.daDoc ? "bg-gray-100" : "bg-gradient-to-r from-emerald-500 to-blue-600"
                                       }`}
                                     >
-                                      {notif.noiDung}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      {new Date(notif.ngay).toLocaleString()} • {notif.loai}
-                                    </p>
-                                    {!notif.daDoc && (
-                                      <button
-                                        onClick={() => handleMarkAsRead(notif._id)}
-                                        className="text-emerald-600 text-xs hover:underline mt-2 font-medium"
+                                      <BellIcon className={`h-4 w-4 ${notif.daDoc ? "text-gray-400" : "text-white"}`} />
+                                    </motion.div>
+                                    <div className="flex-1">
+                                      <p
+                                        className={`text-sm ${
+                                          notif.daDoc ? "text-gray-600" : "text-gray-900 font-medium"
+                                        }`}
                                       >
-                                        Đánh dấu đã đọc
-                                      </button>
-                                    )}
+                                        {notif.noiDung}
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-1">
+                                        {new Date(notif.ngay).toLocaleString()} • {notif.loai}
+                                      </p>
+                                      {!notif.daDoc && (
+                                        <motion.button
+                                          onClick={() => handleMarkAsRead(notif._id)}
+                                          whileHover={{ scale: 1.05 }}
+                                          className="text-emerald-600 text-xs hover:underline mt-2 font-medium"
+                                        >
+                                          Đánh dấu đã đọc
+                                        </motion.button>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    )}
+                                </motion.div>
+                              ))
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* User Dropdown */}
                   <div className="relative">
-                    <button
+                    <motion.button
                       onClick={() => setShowUserDropdown(!showUserDropdown)}
+                      whileHover={{ scale: 1.02 }}
                       className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 transition-all duration-300"
                     >
                       {anhDaiDien ? (
-                        <img
+                        <motion.img
+                          whileHover={{ scale: 1.1 }}
                           src={anhDaiDien || "/placeholder.svg"}
                           alt="Ảnh đại diện"
                           className="h-8 w-8 rounded-full object-cover border-2 border-gray-200"
                           onError={(e) => (e.target.src = "https://placehold.co/32x32")}
                         />
                       ) : (
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-r from-emerald-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                        <motion.div
+                          whileHover={{ scale: 1.1 }}
+                          className="h-8 w-8 rounded-full bg-gradient-to-r from-emerald-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm"
+                        >
                           {userName?.charAt(0)?.toUpperCase() || "U"}
-                        </div>
+                        </motion.div>
                       )}
                       <div className="hidden lg:block text-left">
                         <p className="text-sm font-medium text-gray-900">{userName || "Người Dùng"}</p>
                         <p className="text-xs text-gray-500">Tài khoản cá nhân</p>
                       </div>
-                      <ChevronDownIcon className="h-4 w-4 text-gray-400" />
-                    </button>
+                      <motion.div animate={{ rotate: showUserDropdown ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                      </motion.div>
+                    </motion.button>
 
-                    {showUserDropdown && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/50 z-50">
-                        <div className="p-2">
-                          <div className="px-4 py-3 border-b border-gray-100">
-                            <p className="text-sm font-semibold text-gray-900">{userName || "Người Dùng"}</p>
-                            <p className="text-xs text-gray-500">Quản lý tài khoản của bạn</p>
+                    <AnimatePresence>
+                      {showUserDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-lg rounded-2xl shadow-xl border border-gray-100/50 z-50"
+                        >
+                          <div className="p-2">
+                            <div className="px-4 py-3 border-b border-gray-100">
+                              <p className="text-sm font-semibold text-gray-900">{userName || "Người Dùng"}</p>
+                              <p className="text-xs text-gray-500">Quản lý tài khoản của bạn</p>
+                            </div>
+                            <div className="py-2">
+                              <Link
+                                to="/settings"
+                                className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 transition-all duration-200"
+                                onClick={() => setShowUserDropdown(false)}
+                              >
+                                <Cog6ToothIcon className="h-5 w-5" />
+                                <span className="font-medium">Cài Đặt</span>
+                              </Link>
+                              <motion.button
+                                onClick={() => {
+                                  handleLogout()
+                                  setShowUserDropdown(false)
+                                }}
+                                whileHover={{ scale: 1.02 }}
+                                className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 transition-all duration-200 w-full"
+                              >
+                                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                                <span className="font-medium">Đăng Xuất</span>
+                              </motion.button>
+                            </div>
                           </div>
-                          <div className="py-2">
-                            <Link
-                              to="/settings"
-                              className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 transition-all duration-200"
-                              onClick={() => setShowUserDropdown(false)}
-                            >
-                              <Cog6ToothIcon className="h-5 w-5" />
-                              <span className="font-medium">Cài Đặt</span>
-                            </Link>
-                            <button
-                              onClick={() => {
-                                handleLogout()
-                                setShowUserDropdown(false)
-                              }}
-                              className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 transition-all duration-200 w-full"
-                            >
-                              <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                              <span className="font-medium">Đăng Xuất</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </>
               )}
 
               {/* Mobile Menu Button */}
-              <button
+              <motion.button
                 onClick={() => setShowMenu(!showMenu)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 className="lg:hidden p-2 text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 rounded-xl transition-all duration-300"
               >
-                {showMenu ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
-              </button>
+                <motion.div animate={{ rotate: showMenu ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                  {showMenu ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
+                </motion.div>
+              </motion.button>
             </div>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        {showMenu && (
-          <div className="lg:hidden bg-white/95 backdrop-blur-lg border-t border-gray-100">
-            <div className="px-4 py-4 space-y-2">
-              {userId ? (
-                <>
-                  <Link
-                    to="/overview"
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                      location.pathname === "/overview"
-                        ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
-                        : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
-                    }`}
-                    onClick={() => setShowMenu(false)}
-                  >
-                    <HomeIcon className="h-5 w-5" />
-                    <span className="font-medium">Tổng quan</span>
-                  </Link>
-
-                  {/* Mobile Finance Section */}
-                  <div>
-                    <button
-                      onClick={() => setShowFinanceDropdown(!showFinanceDropdown)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 rounded-xl transition-all duration-300"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <ChartBarIcon className="h-5 w-5" />
-                        <span className="font-medium">Tài chính</span>
-                      </div>
-                      <ChevronDownIcon
-                        className={`h-4 w-4 transform transition-transform duration-200 ${
-                          showFinanceDropdown ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-                    {showFinanceDropdown && (
-                      <div className="ml-4 space-y-1 mt-2">
-                        {financeMenuItems.map((item) => (
-                          <Link
-                            key={item.to}
-                            to={item.to}
-                            className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                              location.pathname === item.to
-                                ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
-                                : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
-                            }`}
-                            onClick={() => setShowMenu(false)}
-                          >
-                            <item.icon className="h-5 w-5" />
-                            <span className="font-medium">{item.label}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Mobile Goals Section */}
-                  <div>
-                    <button
-                      onClick={() => setShowGoalsDropdown(!showGoalsDropdown)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 rounded-xl transition-all duration-300"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <FlagIcon className="h-5 w-5" />
-                        <span className="font-medium">Mục tiêu</span>
-                      </div>
-                      <ChevronDownIcon
-                        className={`h-4 w-4 transform transition-transform duration-200 ${
-                          showGoalsDropdown ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-                    {showGoalsDropdown && (
-                      <div className="ml-4 space-y-1 mt-2">
-                        {goalsMenuItems.map((item) => (
-                          <Link
-                            key={item.to}
-                            to={item.to}
-                            className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                              location.pathname === item.to
-                                ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
-                                : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
-                            }`}
-                            onClick={() => setShowMenu(false)}
-                          >
-                            <item.icon className="h-5 w-5" />
-                            <span className="font-medium">{item.label}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <Link
-                    to="/investments"
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                      location.pathname === "/investments"
-                        ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
-                        : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
-                    }`}
-                    onClick={() => setShowMenu(false)}
-                  >
-                    <ChartBarIcon className="h-5 w-5" />
-                    <span className="font-medium">Đầu tư</span>
-                  </Link>
-
-                  <Link
-                    to="/reports"
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                      location.pathname === "/reports"
-                        ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
-                        : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
-                    }`}
-                    onClick={() => setShowMenu(false)}
-                  >
-                    <ChartBarIcon className="h-5 w-5" />
-                    <span className="font-medium">Báo cáo</span>
-                  </Link>
-
-                  <div className="border-t border-gray-100 pt-4 mt-4">
+        <AnimatePresence>
+          {showMenu && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="lg:hidden bg-white/95 backdrop-blur-lg border-t border-gray-100"
+            >
+              <div className="px-4 py-4 space-y-2">
+                {userId ? (
+                  <>
                     <Link
-                      to="/settings"
-                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 rounded-xl transition-all duration-300"
+                      to="/overview"
+                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                        location.pathname === "/overview"
+                          ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
+                          : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
+                      }`}
                       onClick={() => setShowMenu(false)}
                     >
-                      <Cog6ToothIcon className="h-5 w-5" />
-                      <span className="font-medium">Cài Đặt</span>
+                      <HomeIcon className="h-5 w-5" />
+                      <span className="font-medium">Tổng quan</span>
                     </Link>
-                    <button
-                      onClick={() => {
-                        handleLogout()
-                        setShowMenu(false)
-                      }}
-                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 rounded-xl transition-all duration-300 w-full"
+
+                    {/* Mobile Finance Section */}
+                    <div>
+                      <motion.button
+                        onClick={() => setShowFinanceDropdown(!showFinanceDropdown)}
+                        whileHover={{ scale: 1.02 }}
+                        className="w-full flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 rounded-xl transition-all duration-300"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <ChartBarIcon className="h-5 w-5" />
+                          <span className="font-medium">Tài chính</span>
+                        </div>
+                        <motion.div animate={{ rotate: showFinanceDropdown ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                          <ChevronDownIcon className="h-4 w-4" />
+                        </motion.div>
+                      </motion.button>
+                      <AnimatePresence>
+                        {showFinanceDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="ml-4 space-y-1 mt-2"
+                          >
+                            {financeMenuItems.map((item) => (
+                              <Link
+                                key={item.to}
+                                to={item.to}
+                                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                                  location.pathname === item.to
+                                    ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
+                                    : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
+                                }`}
+                                onClick={() => setShowMenu(false)}
+                              >
+                                <item.icon className="h-5 w-5" />
+                                <span className="font-medium">{item.label}</span>
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Mobile Goals Section */}
+                    <div>
+                      <motion.button
+                        onClick={() => setShowGoalsDropdown(!showGoalsDropdown)}
+                        whileHover={{ scale: 1.02 }}
+                        className="w-full flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 rounded-xl transition-all duration-300"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <FlagIcon className="h-5 w-5" />
+                          <span className="font-medium">Mục tiêu</span>
+                        </div>
+                        <motion.div animate={{ rotate: showGoalsDropdown ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                          <ChevronDownIcon className="h-4 w-4" />
+                        </motion.div>
+                      </motion.button>
+                      <AnimatePresence>
+                        {showGoalsDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="ml-4 space-y-1 mt-2"
+                          >
+                            {goalsMenuItems.map((item) => (
+                              <Link
+                                key={item.to}
+                                to={item.to}
+                                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                                  location.pathname === item.to
+                                    ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
+                                    : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
+                                }`}
+                                onClick={() => setShowMenu(false)}
+                              >
+                                <item.icon className="h-5 w-5" />
+                                <span className="font-medium">{item.label}</span>
+                              </Link>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <Link
+                      to="/investments"
+                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                        location.pathname === "/investments"
+                          ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
+                          : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
+                      }`}
+                      onClick={() => setShowMenu(false)}
                     >
-                      <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                      <span className="font-medium">Đăng Xuất</span>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <Link
-                  to="/"
-                  className="block px-4 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-xl hover:from-emerald-600 hover:to-blue-700 transition-all duration-300 text-center font-medium"
-                  onClick={() => setShowMenu(false)}
-                >
-                  Đăng Nhập
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
+                      <ChartBarIcon className="h-5 w-5" />
+                      <span className="font-medium">Đầu tư</span>
+                    </Link>
+
+                    <Link
+                      to="/reports"
+                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                        location.pathname === "/reports"
+                          ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white"
+                          : "text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600"
+                      }`}
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <ChartBarIcon className="h-5 w-5" />
+                      <span className="font-medium">Báo cáo</span>
+                    </Link>
+
+                    <div className="border-t border-gray-100 pt-4 mt-4">
+                      <Link
+                        to="/settings"
+                        className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 rounded-xl transition-all duration-300"
+                        onClick={() => setShowMenu(false)}
+                      >
+                        <Cog6ToothIcon className="h-5 w-5" />
+                        <span className="font-medium">Cài Đặt</span>
+                      </Link>
+                      <motion.button
+                        onClick={() => {
+                          handleLogout()
+                          setShowMenu(false)
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 rounded-xl transition-all duration-300 w-full"
+                      >
+                        <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                        <span className="font-medium">Đăng Xuất</span>
+                      </motion.button>
+                    </div>
+                  </>
+                ) : (
+                  <Link
+                    to="/"
+                    className="block px-4 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-xl hover:from-emerald-600 hover:to-blue-700 transition-all duration-300 text-center font-medium"
+                    onClick={() => setShowMenu(false)}
+                  >
+                    Đăng Nhập
+                  </Link>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
     </>
   )

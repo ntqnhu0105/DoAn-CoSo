@@ -18,7 +18,12 @@ import {
   ArrowUpCircleIcon,
   ArrowDownCircleIcon,
   WalletIcon,
+  ChartBarIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline"
+import { motion, AnimatePresence } from "framer-motion"
 import { debounce } from "lodash"
 
 // API URL với fallback
@@ -56,19 +61,28 @@ const TransactionForm = ({
   setNgayGiaoDich,
   error,
 }) => (
-  <div className="group relative bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30 p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 border border-blue-100/50 backdrop-blur-sm overflow-hidden mb-8">
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    className="group relative bg-gradient-to-br from-white via-blue-50/30 to-emerald-50/30 p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 border border-blue-100/50 backdrop-blur-sm overflow-hidden mb-8"
+  >
     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
     <div className="relative z-10">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
-          <div className="bg-gradient-to-br from-emerald-500 to-blue-600 p-4 rounded-2xl shadow-lg">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-gradient-to-br from-emerald-500 to-blue-600 p-4 rounded-2xl shadow-lg"
+          >
             {editingTransaction ? (
               <PencilIcon className="h-6 w-6 text-white" />
             ) : (
               <PlusIcon className="h-6 w-6 text-white" />
             )}
-          </div>
+          </motion.div>
           <div>
             <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
               {editingTransaction ? "Sửa Giao Dịch" : "Thêm Giao Dịch Mới"}
@@ -80,28 +94,39 @@ const TransactionForm = ({
         </div>
 
         {editingTransaction && (
-          <div className="bg-blue-100 px-4 py-2 rounded-full">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-blue-100 px-4 py-2 rounded-full"
+          >
             <span className="text-xs font-semibold text-blue-700">Đang chỉnh sửa</span>
-          </div>
+          </motion.div>
         )}
       </div>
 
-      {error && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-100/50 text-red-700 rounded-2xl shadow-sm border border-red-200/50 backdrop-blur-sm">
-          <div className="flex items-center space-x-2">
-            <div className="bg-red-200 p-1 rounded-full">
-              <svg className="h-4 w-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-100/50 text-red-700 rounded-2xl shadow-sm border border-red-200/50 backdrop-blur-sm"
+          >
+            <div className="flex items-center space-x-2">
+              <div className="bg-red-200 p-1 rounded-full">
+                <svg className="h-4 w-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <p className="text-sm font-medium" dangerouslySetInnerHTML={{ __html: error }} />
             </div>
-            <p className="text-sm font-medium" dangerouslySetInnerHTML={{ __html: error }} />
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <form onSubmit={onSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -133,7 +158,9 @@ const TransactionForm = ({
               <span>Loại Giao Dịch</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={() => setLoai("Thu nhập")}
                 className={`p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center space-x-2 ${
@@ -144,8 +171,10 @@ const TransactionForm = ({
               >
                 <ArrowUpCircleIcon className="h-5 w-5" />
                 <span className="font-semibold">Thu nhập</span>
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={() => setLoai("Chi tiêu")}
                 className={`p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center space-x-2 ${
@@ -156,7 +185,7 @@ const TransactionForm = ({
               >
                 <ArrowDownCircleIcon className="h-5 w-5" />
                 <span className="font-semibold">Chi tiêu</span>
-              </button>
+              </motion.button>
             </div>
           </div>
 
@@ -246,18 +275,21 @@ const TransactionForm = ({
             </label>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {["Tiền mặt", "Thẻ tín dụng", "Chuyển khoản", "Ví điện tử"].map((method) => (
-                <button
+                <motion.button
                   key={method}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   type="button"
                   onClick={() => setPhuongThucThanhToan(method)}
-                  className={`p-3 rounded-xl border-2 transition-all duration-300 text-sm font-medium ${
+                  className={`p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center space-x-2 ${
                     phuongThucThanhToan === method
                       ? "bg-gradient-to-r from-pink-500 to-pink-600 text-white border-pink-500 shadow-lg"
                       : "bg-white/70 text-gray-600 border-gray-200 hover:border-pink-300 hover:bg-pink-50"
                   }`}
                 >
-                  {method}
-                </button>
+                  <CreditCardIcon className="h-5 w-5" />
+                  <span className="font-semibold">{method}</span>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -269,211 +301,208 @@ const TransactionForm = ({
               <span>Ghi Chú</span>
             </label>
             <div className="relative">
-              <input
-                type="text"
+              <textarea
                 value={ghiChu}
                 onChange={(e) => setGhiChu(e.target.value)}
-                placeholder="Nhập ghi chú (tùy chọn)"
-                className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-gray-500/20 focus:shadow-lg transition-all duration-300"
+                placeholder="Nhập ghi chú (không bắt buộc)"
+                className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-gray-500/20 focus:shadow-lg transition-all duration-300 min-h-[100px] resize-none"
               />
-              <DocumentTextIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
+              <DocumentTextIcon className="absolute left-4 top-4 h-5 w-5 text-gray-500" />
             </div>
           </div>
+        </div>
 
-          {/* Buttons */}
-          <div className="lg:col-span-2 flex flex-col sm:flex-row gap-4 pt-4">
-            <button
-              type="submit"
-              className="flex-1 px-8 py-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-2xl hover:from-emerald-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-1 font-semibold"
-              disabled={!maTaiKhoan || !maDanhMuc || !soTien || Number.parseFloat(soTien) <= 0}
+        <div className="flex justify-end space-x-4 mt-8">
+          {editingTransaction && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={onCancel}
+              className="px-6 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors duration-200"
             >
-              {editingTransaction ? (
-                <>
-                  <PencilIcon className="h-5 w-5" />
-                  <span>Cập Nhật Giao Dịch</span>
-                </>
-              ) : (
-                <>
-                  <PlusIcon className="h-5 w-5" />
-                  <span>Thêm Giao Dịch</span>
-                </>
-              )}
-            </button>
-
-            {editingTransaction && (
-              <button
-                type="button"
-                className="flex-1 sm:flex-none px-8 py-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-2xl hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg transform hover:-translate-y-1 font-semibold"
-                onClick={onCancel}
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>Hủy</span>
-              </button>
-            )}
-          </div>
+              Hủy
+            </motion.button>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            {editingTransaction ? "Cập Nhật" : "Thêm Giao Dịch"}
+          </motion.button>
         </div>
       </form>
     </div>
-  </div>
+  </motion.div>
 )
 
 // Sub-component: TransactionList
 const TransactionList = ({ transactions, loading, onEdit, onDelete }) => (
-  <div className="bg-gradient-to-br from-white via-gray-50/30 to-blue-50/30 p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100/50 backdrop-blur-sm">
-    <div className="flex items-center justify-between mb-8">
-      <div className="flex items-center space-x-4">
-        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-4 rounded-2xl shadow-lg">
-          <BanknotesIcon className="h-6 w-6 text-white" />
-        </div>
-        <div>
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            Lịch Sử Giao Dịch
-          </h3>
-          <p className="text-gray-500 text-sm mt-1">Quản lý và theo dõi các giao dịch của bạn</p>
-        </div>
-      </div>
-
-      <div className="bg-blue-100 px-4 py-2 rounded-full">
-        <span className="text-xs font-semibold text-blue-700">{transactions.length} giao dịch</span>
-      </div>
+  <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-lg border border-gray-100/50 overflow-hidden">
+    <div className="p-6 border-b border-gray-100">
+      <h3 className="text-xl font-bold text-gray-800">Lịch Sử Giao Dịch</h3>
     </div>
 
     {loading ? (
-      <div className="grid grid-cols-1 gap-6 animate-pulse">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 p-6 rounded-2xl h-32"></div>
-        ))}
+      <div className="p-8 text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+        <p className="mt-2 text-gray-500">Đang tải dữ liệu...</p>
       </div>
     ) : transactions.length === 0 ? (
-      <div className="text-center py-16">
-        <div className="bg-gray-100 p-6 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-          <BanknotesIcon className="h-10 w-10 text-gray-400" />
+      <div className="p-8 text-center">
+        <div className="inline-block p-4 bg-gray-100 rounded-full">
+          <DocumentTextIcon className="h-8 w-8 text-gray-400" />
         </div>
-        <p className="text-gray-500 text-lg mb-6 font-medium">Chưa có giao dịch nào</p>
-        <p className="text-gray-400 text-sm mb-8">Hãy thêm giao dịch đầu tiên của bạn để bắt đầu theo dõi chi tiêu</p>
-        <Link
-          to="/transactions/new"
-          className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-2xl hover:from-emerald-600 hover:to-blue-700 transition-all duration-300 space-x-3 shadow-lg transform hover:-translate-y-1 font-semibold"
-        >
-          <PlusIcon className="h-5 w-5" />
-          <span>Thêm giao dịch đầu tiên</span>
-        </Link>
+        <p className="mt-2 text-gray-500">Chưa có giao dịch nào</p>
       </div>
     ) : (
-      <div className="space-y-4 max-h-96 overflow-y-auto custom-scrollbar">
-        {transactions.map((transaction) => (
-          <div
-            key={transaction._id}
-            className="group p-6 bg-white/70 backdrop-blur-sm rounded-2xl hover:bg-white/90 hover:shadow-lg transition-all duration-300 border border-white/50"
-          >
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-4 mb-4">
+      <div className="divide-y divide-gray-100">
+        <AnimatePresence>
+          {transactions.map((transaction) => (
+            <motion.div
+              key={transaction._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="p-6 hover:bg-gray-50/50 transition-colors duration-200"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
                   <div
-                    className={`p-3 rounded-2xl ${
+                    className={`p-3 rounded-xl ${
                       transaction.loai === "Thu nhập"
-                        ? "bg-gradient-to-br from-emerald-100 to-emerald-200"
-                        : "bg-gradient-to-br from-red-100 to-red-200"
+                        ? "bg-emerald-100 text-emerald-600"
+                        : "bg-red-100 text-red-600"
                     }`}
                   >
                     {transaction.loai === "Thu nhập" ? (
-                      <ArrowUpCircleIcon className="h-6 w-6 text-emerald-600" />
+                      <ArrowUpCircleIcon className="h-6 w-6" />
                     ) : (
-                      <ArrowDownCircleIcon className="h-6 w-6 text-red-600" />
+                      <ArrowDownCircleIcon className="h-6 w-6" />
                     )}
                   </div>
-
                   <div>
-                    <div className="flex items-center space-x-3 mb-1">
-                      <span
-                        className={`font-bold text-lg ${
-                          transaction.loai === "Thu nhập" ? "text-emerald-600" : "text-red-600"
-                        }`}
-                      >
-                        {formatCurrency(transaction.soTien)}
-                      </span>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          transaction.loai === "Thu nhập"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {transaction.loai}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 font-medium">{transaction.ghiChu || "Không có ghi chú"}</p>
+                    <h4 className="font-semibold text-gray-800">{transaction.danhMuc?.tenDanhMuc}</h4>
+                    <p className="text-sm text-gray-500">{transaction.ghiChu || "Không có ghi chú"}</p>
                   </div>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <WalletIcon className="h-4 w-4 text-indigo-500" />
-                    <div>
-                      <p className="text-gray-500 text-xs">Tài khoản</p>
-                      <p className="font-semibold text-gray-700">
-                        {transaction.maTaiKhoan?.tenTaiKhoan || "Không xác định"}
-                      </p>
-                    </div>
+                <div className="flex items-center space-x-4">
+                  <div className="text-right">
+                    <p
+                      className={`font-semibold ${
+                        transaction.loai === "Thu nhập" ? "text-emerald-600" : "text-red-600"
+                      }`}
+                    >
+                      {transaction.loai === "Thu nhập" ? "+" : "-"}
+                      {formatCurrency(transaction.soTien)}
+                    </p>
+                    <p className="text-sm text-gray-500">{new Date(transaction.ngayGiaoDich).toLocaleDateString()}</p>
                   </div>
-
-                  <div className="flex items-center space-x-2">
-                    <TagIcon className="h-4 w-4 text-orange-500" />
-                    <div>
-                      <p className="text-gray-500 text-xs">Danh mục</p>
-                      <p className="font-semibold text-gray-700">
-                        {transaction.maDanhMuc?.tenDanhMuc || "Không xác định"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <CreditCardIcon className="h-4 w-4 text-pink-500" />
-                    <div>
-                      <p className="text-gray-500 text-xs">Phương thức</p>
-                      <p className="font-semibold text-gray-700">{transaction.phuongThucThanhToan || "Không có"}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <CalendarDaysIcon className="h-4 w-4 text-purple-500" />
-                    <div>
-                      <p className="text-gray-500 text-xs">Ngày</p>
-                      <p className="font-semibold text-gray-700">
-                        {new Date(transaction.ngayGiaoDich).toLocaleDateString("vi-VN")}
-                      </p>
-                    </div>
+                  <div className="flex space-x-2">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => onEdit(transaction)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                    >
+                      <PencilIcon className="h-5 w-5" />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => onDelete(transaction._id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </motion.button>
                   </div>
                 </div>
               </div>
-
-              <div className="mt-4 lg:mt-0 flex space-x-3">
-                <button
-                  onClick={() => onEdit(transaction)}
-                  className="px-6 py-3 bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-700 rounded-xl hover:from-yellow-200 hover:to-yellow-300 transition-all duration-300 flex items-center space-x-2 shadow-sm transform hover:-translate-y-1 font-semibold border border-yellow-200"
-                >
-                  <PencilIcon className="h-4 w-4" />
-                  <span>Sửa</span>
-                </button>
-                <button
-                  onClick={() => onDelete(transaction._id)}
-                  className="px-6 py-3 bg-gradient-to-r from-red-100 to-red-200 text-red-700 rounded-xl hover:from-red-200 hover:to-red-300 transition-all duration-300 flex items-center space-x-2 shadow-sm transform hover:-translate-y-1 font-semibold border border-red-200"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                  <span>Xóa</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     )}
   </div>
 )
 
-// Main Dashboard Component
+// Sub-component: Statistics
+const Statistics = ({ transactions }) => {
+  const stats = useMemo(() => {
+    const totalIncome = transactions
+      .filter((t) => t.loai === "Thu nhập")
+      .reduce((sum, t) => sum + t.soTien, 0)
+    const totalExpense = transactions
+      .filter((t) => t.loai === "Chi tiêu")
+      .reduce((sum, t) => sum + t.soTien, 0)
+    const balance = totalIncome - totalExpense
+
+    return {
+      totalIncome,
+      totalExpense,
+      balance,
+    }
+  }, [transactions])
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-6 rounded-3xl shadow-lg text-white"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-emerald-100">Tổng Thu</p>
+            <p className="text-2xl font-bold mt-1">{formatCurrency(stats.totalIncome)}</p>
+          </div>
+          <div className="p-3 bg-white/10 rounded-xl">
+            <ArrowTrendingUpIcon className="h-6 w-6" />
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-3xl shadow-lg text-white"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-red-100">Tổng Chi</p>
+            <p className="text-2xl font-bold mt-1">{formatCurrency(stats.totalExpense)}</p>
+          </div>
+          <div className="p-3 bg-white/10 rounded-xl">
+            <ArrowTrendingDownIcon className="h-6 w-6" />
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-3xl shadow-lg text-white"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-blue-100">Số Dư</p>
+            <p className="text-2xl font-bold mt-1">{formatCurrency(stats.balance)}</p>
+          </div>
+          <div className="p-3 bg-white/10 rounded-xl">
+            <CurrencyDollarIcon className="h-6 w-6" />
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+// Main component: Dashboard
 const Dashboard = () => {
   const [transactions, setTransactions] = useState([])
   const [categories, setCategories] = useState([])
@@ -744,98 +773,64 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-emerald-100 py-8 px-4 sm:px-6 lg:px-8">
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.05);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(0, 0, 0, 0.3);
-        }
-      `}</style>
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-emerald-50/30 py-8 px-4">
       <ToastContainer
         position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        closeButton={true}
+        autoClose={3000}
+        theme="colored"
         toastStyle={{
-          borderRadius: "16px",
-          backdropFilter: "blur(10px)",
+          borderRadius: '12px',
+          backdropFilter: 'blur(10px)',
         }}
       />
 
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-10">
-          <div className="flex items-center space-x-6 mb-6 lg:mb-0">
-            <div className="bg-gradient-to-br from-emerald-500 to-blue-600 p-4 rounded-3xl shadow-xl">
-              <HomeIcon className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                Quản lý giao dịch
-              </h1>
-              <p className="text-gray-500 text-lg mt-2">
-                {new Date().toLocaleDateString("vi-VN", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  weekday: "long",
-                })}
-              </p>
-            </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-3xl font-semibold text-gray-800">ViSmart Board</h1>
+          <p className="text-gray-500 mt-2">Quản lý tài chính của bạn một cách thông minh</p>
+        </motion.div>
+
+        <Statistics transactions={transactions} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <TransactionForm
+              accounts={accounts}
+              categories={categories}
+              editingTransaction={editingTransaction}
+              onSubmit={handleSubmit}
+              onCancel={handleCancelEdit}
+              soTien={soTien}
+              setSoTien={setSoTien}
+              loai={loai}
+              setLoai={setLoai}
+              maDanhMuc={maDanhMuc}
+              setMaDanhMuc={setMaDanhMuc}
+              maTaiKhoan={maTaiKhoan}
+              setMaTaiKhoan={setMaTaiKhoan}
+              ghiChu={ghiChu}
+              setGhiChu={setGhiChu}
+              phuongThucThanhToan={phuongThucThanhToan}
+              setPhuongThucThanhToan={setPhuongThucThanhToan}
+              ngayGiaoDich={ngayGiaoDich}
+              setNgayGiaoDich={setNgayGiaoDich}
+              error={error}
+            />
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-2xl shadow-lg border border-white/50">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-semibold text-gray-700">{loading ? "Đang tải..." : "Đã cập nhật"}</span>
-              </div>
-            </div>
+          <div className="lg:col-span-1">
+            <TransactionList
+              transactions={transactions}
+              loading={loading}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           </div>
         </div>
-
-        <TransactionForm
-          accounts={accounts}
-          categories={categories}
-          editingTransaction={editingTransaction}
-          onSubmit={handleSubmit}
-          onCancel={handleCancelEdit}
-          soTien={soTien}
-          setSoTien={setSoTien}
-          loai={loai}
-          setLoai={setLoai}
-          maDanhMuc={maDanhMuc}
-          setMaDanhMuc={setMaDanhMuc}
-          maTaiKhoan={maTaiKhoan}
-          setMaTaiKhoan={setMaTaiKhoan}
-          ghiChu={ghiChu}
-          setGhiChu={setGhiChu}
-          phuongThucThanhToan={phuongThucThanhToan}
-          setPhuongThucThanhToan={setPhuongThucThanhToan}
-          ngayGiaoDich={ngayGiaoDich}
-          setNgayGiaoDich={setNgayGiaoDich}
-          error={error}
-        />
-
-        <TransactionList transactions={transactions} loading={loading} onEdit={handleEdit} onDelete={handleDelete} />
       </div>
     </div>
   )
