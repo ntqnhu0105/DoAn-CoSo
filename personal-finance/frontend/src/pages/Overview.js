@@ -21,9 +21,12 @@ import {
   ArrowTrendingDownIcon,
   MinusIcon,
   DocumentTextIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline"
 import { debounce } from "lodash"
 import { motion, AnimatePresence } from "framer-motion"
+import React from "react"
+import { useSwipeable } from "react-swipeable"
 
 // Đăng ký ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement)
@@ -1314,8 +1317,8 @@ const DebtCard = ({ debts, loading, navigate }) => {
                               />
                     </div>
                     <div className="flex justify-between text-xs text-gray-600">
-                      <span>Đã trả: {formatCurrency(debt.soTienDaTra)}</span>
-                      <span>Tổng: {formatCurrency(debt.soTien)}</span>
+                              <span>Đã trả: {formatCurrency(debt.soTienDaTra)}</span>
+                              <span>Tổng: {formatCurrency(debt.soTien)}</span>
                     </div>
                   </div>
                         </motion.div>
@@ -1808,6 +1811,53 @@ const Overview = () => {
   const [lastUpdated, setLastUpdated] = useState(null)
   const navigate = useNavigate()
 
+  // Add missing state variables
+  const [viewMode, setViewMode] = useState('list')
+  const [currentSlide, setCurrentSlide] = useState(0)
+
+  // Define slides array
+  const slides = [
+    {
+      component: <AccountCard accounts={data?.accounts || { list: [], totalBalance: 0 }} loading={loadingAccounts} navigate={navigate} />,
+      icon: BanknotesIcon,
+      color: 'from-emerald-500 to-emerald-600',
+      title: 'Tài khoản'
+    },
+    {
+      component: <SavingGoalCard savingGoals={data?.savingGoals || { list: [], totalSavings: 0 }} loading={loadingSavingGoals} navigate={navigate} />,
+      icon: CurrencyDollarIcon,
+      color: 'from-blue-500 to-blue-600',
+      title: 'Mục tiêu tiết kiệm'
+    },
+    {
+      component: <InvestmentCard investments={data?.investments || { list: [], totalInvestment: 0, totalProfit: 0 }} loading={loadingInvestments} navigate={navigate} />,
+      icon: ChartBarIcon,
+      color: 'from-purple-500 to-purple-600',
+      title: 'Đầu tư'
+    },
+    {
+      component: <DebtCard debts={data?.debts || { list: [], totalDebt: 0 }} loading={loadingDebts} navigate={navigate} />,
+      icon: CreditCardIcon,
+      color: 'from-red-500 to-red-600',
+      title: 'Nợ/Khoản vay'
+    },
+    {
+      component: <BudgetCard budgets={data?.budgets || []} navigate={navigate} />,
+      icon: ChartPieIcon,
+      color: 'from-orange-500 to-orange-600',
+      title: 'Ngân sách'
+    }
+  ]
+
+  // Add slide change handler
+  const handleSlideChange = (direction) => {
+    if (direction === 'next') {
+      setCurrentSlide((prev) => (prev + 1) % slides.length)
+    } else {
+      setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
+    }
+  }
+
   // Sanitize userId
   const userId = localStorage.getItem("userId")?.replace(/[^\w-]/g, "")
 
@@ -1894,6 +1944,14 @@ const Overview = () => {
     })
   }
 
+  // Trong component Overview, thêm handlers cho swipe
+  const handlers = useSwipeable({
+    onSwipedLeft: () => handleSlideChange('next'),
+    onSwipedRight: () => handleSlideChange('prev'),
+    preventDefaultTouchmoveEvent: true,
+    trackMouse: true
+  })
+
   if (error) {
     return (
       <motion.div
@@ -1938,11 +1996,7 @@ const Overview = () => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-emerald-50/30 py-8 px-4"
-    >
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-emerald-50/30 py-8 px-4">
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -1954,127 +2008,199 @@ const Overview = () => {
       />
 
       <div className="max-w-7xl mx-auto">
+
+        {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="flex flex-col md:flex-row items-start justify-between mb-8 bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50"
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Tổng Quan Tài Chính</h1>
-              <p className="text-gray-500 mt-2">Xem tổng quan về tình hình tài chính của bạn</p>
-              {lastUpdated && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Cập nhật lần cuối: {lastUpdated.toLocaleTimeString("vi-VN")}
-              </p>
-              )}
+          {/* Top row in Header (Title + Weather) */}
+          <div className="flex flex-col md:flex-row items-start justify-between w-full mb-4 md:mb-0">
+            {/* Title and Description */}
+            <div className="flex-grow min-w-0 mr-4 mb-4 md:mb-0">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                Tổng Quan Tài Chính
+              </h1>
+              <p className="text-gray-500 mt-2">Quản lý và theo dõi tài chính của bạn một cách thông minh</p>
             </div>
-            <div className="mt-4 md:mt-0 flex items-center gap-4">
+            
+            {/* Weather Card (Hidden on small screens) */}
+            <div className="hidden md:block flex-shrink-0">
+              {/* {showWeatherCard && <WeatherCard />} */}
+            </div>
+          </div>
+
+          {/* Controls (View Mode, Time Range, Refresh) - Bottom row on MD, Right on LG */}
+          <div className="mt-0 flex items-center space-x-4 flex-shrink-0 self-end md:self-start">
+            {/* View Mode Toggle */}
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-gray-100">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className={`p-2 rounded-xl ${
-                  isRefreshing ? 'bg-gray-100 text-gray-400' : 'bg-white/70 text-gray-600 hover:bg-white/90'
-                } transition-all duration-300`}
+                onClick={() => setViewMode('slideshow')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  viewMode === 'slideshow'
+                    ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white shadow-md"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
               >
-                <svg
-                  className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
+                <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
+                Slideshow
               </motion.button>
-            <select
-              value={timeRange}
-                onChange={(e) => handleTimeRangeChange(e.target.value)}
-                className="px-4 py-2 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
-            >
-                <option value="week">Tuần này</option>
-              <option value="month">Tháng này</option>
-              <option value="year">Năm nay</option>
-            </select>
-          </div>
-        </div>
-        </motion.div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <AccountCard
-              accounts={data?.accounts || { list: [], totalBalance: 0 }}
-              loading={loadingAccounts}
-              navigate={navigate}
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <SavingGoalCard
-              savingGoals={data?.savingGoals || { list: [], totalSavings: 0 }}
-              loading={loadingSavingGoals}
-              navigate={navigate}
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <InvestmentCard
-              investments={data?.investments || { list: [], totalInvestment: 0, totalProfit: 0 }}
-              loading={loadingInvestments}
-              navigate={navigate}
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <DebtCard
-              debts={data?.debts || { list: [], totalDebt: 0 }}
-              loading={loadingDebts}
-              navigate={navigate}
-            />
-          </motion.div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setViewMode('list')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  viewMode === 'list'
+                    ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white shadow-md"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                List View
+              </motion.button>
             </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8"
-        >
-          <IncomeExpenseChart transactions={data?.transactions || { totalIncome: 0, totalExpense: 0 }} />
+            {/* Time Range Selector */}
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-gray-100">
+              {["Tuần", "Tháng", "Quý", "Năm"].map((range) => (
+                <motion.button
+                  key={range}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleTimeRangeChange(range)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                    timeRange === range
+                      ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white shadow-md"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {range}
+                </motion.button>
+              ))}
+            </div>
+            
+            {/* Refresh Button */}
+            <motion.button
+              whileHover={{ scale: 1.05, rotate: 180 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRefresh}
+              className="p-2 bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:text-emerald-600 transition-colors duration-300"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+            </motion.button>
+          </div>
         </motion.div>
 
+        {/* Main Content */}
+        {viewMode === 'slideshow' ? (
+          <div className="relative">
+            {/* Slideshow Content */}
+            <div className="relative">
+              {/* Slideshow Content */}
+              <div {...handlers}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentSlide}
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                  >
+                    <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50">
+                      {slides[currentSlide].component}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Mini Preview - Moved below slideshow */}
+              <div className="mt-8 flex justify-center space-x-4">
+                {slides.map((slide, index) => (
+                  <motion.button
+                    key={index}
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                      currentSlide === index 
+                        ? "border-emerald-500 scale-110" 
+                        : "border-transparent opacity-50 hover:opacity-100"
+                    }`}
+                  >
+                    <div className={`w-full h-full bg-gradient-to-br ${slide.color} p-2 flex items-center justify-center`}>
+                      {React.createElement(slide.icon, {
+                        className: "h-6 w-6 text-white"
+                      })}
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Column - Accounts & Savings */}
+            <div className="lg:col-span-4 space-y-6">
+              <AccountCard accounts={data?.accounts || { list: [], totalBalance: 0 }} loading={loadingAccounts} navigate={navigate} />
+              <SavingGoalCard savingGoals={data?.savingGoals || { list: [], totalSavings: 0 }} loading={loadingSavingGoals} navigate={navigate} />
+            </div>
+
+            {/* Middle Column - Charts & Budget */}
+            <div className="lg:col-span-5 space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50"
+              >
+                <IncomeExpenseChart transactions={data?.transactions || { totalIncome: 0, totalExpense: 0 }} />
+              </motion.div>
+              <BudgetCard budgets={data?.budgets || []} navigate={navigate} />
+            </div>
+
+            {/* Right Column - Investments & Debts */}
+            <div className="lg:col-span-3 space-y-6">
+              <InvestmentCard investments={data?.investments || { list: [], totalInvestment: 0, totalProfit: 0 }} loading={loadingInvestments} navigate={navigate} />
+              <DebtCard debts={data?.debts || { list: [], totalDebt: 0 }} loading={loadingDebts} navigate={navigate} />
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions Bar */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="mt-8"
+          className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-lg rounded-full shadow-lg border border-gray-100/50 p-2"
         >
-            <BudgetCard budgets={data?.budgets || []} navigate={navigate} />
-        </motion.div>
+          <div className="flex items-center space-x-2">
+            {[
+              { icon: PlusIcon, label: "Thêm giao dịch", path: "/dashboard" },
+              { icon: BanknotesIcon, label: "Quản lý tài khoản", path: "/accounts" },
+              { icon: ChartPieIcon, label: "Báo cáo", path: "/reports" },
+              { icon: CreditCardIcon, label: "Ngân sách", path: "/budgets" }
+            ].map((action) => (
+              <motion.button
+                key={action.label}
+                whileHover={{ scale: 1.05, y: -5 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate(action.path)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-full text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-300"
+              >
+                <action.icon className="h-5 w-5" />
+                <span className="text-sm font-medium">{action.label}</span>
+              </motion.button>
+            ))}
           </div>
-    </motion.div>
+        </motion.div>
+      </div>
+    </div>
   )
 }
 
