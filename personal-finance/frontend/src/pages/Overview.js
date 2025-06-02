@@ -724,8 +724,7 @@ const InvestmentCard = ({ investments, loading, navigate }) => {
 }
 
 // Sub-component: IncomeExpenseChart
-const IncomeExpenseChart = ({ transactions }) => {
-  const [timeRange, setTimeRange] = useState('month') // 'week', 'month', 'year'
+const IncomeExpenseChart = ({ transactions, timeRange }) => {
   const [chartType, setChartType] = useState('bar') // 'bar', 'line'
   const [viewMode, setViewMode] = useState('split') // 'split', 'chart', 'stats'
   const [selectedCategory, setSelectedCategory] = useState('all') // 'all', 'income', 'expense'
@@ -734,8 +733,8 @@ const IncomeExpenseChart = ({ transactions }) => {
     if (!transactions) return { labels: [], datasets: [] }
 
     const labels = ["Thu nhập", "Chi tiêu"]
-    const incomeData = transactions.totalIncome
-    const expenseData = transactions.totalExpense
+    const incomeData = transactions.totalIncome || 0
+    const expenseData = transactions.totalExpense || 0
 
     return {
       labels,
@@ -753,9 +752,9 @@ const IncomeExpenseChart = ({ transactions }) => {
     }
   }, [transactions])
 
-  const difference = transactions.totalIncome - transactions.totalExpense
+  const difference = (transactions.totalIncome || 0) - (transactions.totalExpense || 0)
   const percentage = transactions.totalIncome > 0 
-    ? ((transactions.totalExpense / transactions.totalIncome) * 100).toFixed(1)
+    ? (((transactions.totalExpense || 0) / transactions.totalIncome) * 100).toFixed(1)
     : 0
 
   const getStatusColor = (value) => {
@@ -771,6 +770,36 @@ const IncomeExpenseChart = ({ transactions }) => {
   const getStatusText = (value) => {
     if (value >= 0) return 'Thặng dư'
     return 'Thâm hụt'
+  }
+
+  // Hàm lấy tiêu đề dựa trên timeRange
+  const getTitle = () => {
+    const now = new Date()
+    switch (timeRange.toLowerCase()) {
+      case 'week':
+        return `Tuần này`
+      case 'month':
+        return `Tháng ${now.getMonth() + 1}/${now.getFullYear()}`
+      case 'quarter':
+        return `Quý ${Math.floor(now.getMonth() / 3) + 1}/${now.getFullYear()}`
+      case 'year':
+        return `Năm ${now.getFullYear()}`
+      default:
+        return `Tháng ${now.getMonth() + 1}/${now.getFullYear()}`
+    }
+  }
+
+  // Kiểm tra nếu không có dữ liệu
+  if (!transactions.totalIncome && !transactions.totalExpense) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-6 rounded-2xl shadow-md border border-gray-100/50 backdrop-blur-sm text-center py-8"
+      >
+        <p className="text-gray-500">Không có dữ liệu giao dịch cho {getTitle()}</p>
+      </motion.div>
+    )
   }
 
   return (
@@ -789,9 +818,7 @@ const IncomeExpenseChart = ({ transactions }) => {
             <ChartBarIcon className="h-5 w-5 text-white" />
           </motion.div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-800">
-              Tháng {new Date().getMonth() + 1}/{new Date().getFullYear()}
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-800">{getTitle()}</h3>
             <p className="text-xs text-gray-500">Phân tích thu nhập và chi tiêu</p>
           </div>
         </div>
@@ -801,11 +828,11 @@ const IncomeExpenseChart = ({ transactions }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setViewMode('split')}
-              className={`p-1.5 rounded-lg ${
+              className={`p-1.5 rounded-md ${
                 viewMode === 'split' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
             </motion.button>
@@ -813,7 +840,7 @@ const IncomeExpenseChart = ({ transactions }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setViewMode('chart')}
-              className={`p-1.5 rounded-lg ${
+              className={`p-1.5 rounded-md ${
                 viewMode === 'chart' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -823,7 +850,7 @@ const IncomeExpenseChart = ({ transactions }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setViewMode('stats')}
-              className={`p-1.5 rounded-lg ${
+              className={`p-1.5 rounded-md ${
                 viewMode === 'stats' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -832,15 +859,6 @@ const IncomeExpenseChart = ({ transactions }) => {
               </svg>
             </motion.button>
           </div>
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="px-3 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-          >
-            <option value="week">Tuần này</option>
-            <option value="month">Tháng này</option>
-            <option value="year">Năm nay</option>
-          </select>
           <select
             value={chartType}
             onChange={(e) => setChartType(e.target.value)}
@@ -881,7 +899,7 @@ const IncomeExpenseChart = ({ transactions }) => {
               <div>
                 <p className="text-sm font-medium text-green-700">Thu nhập</p>
                 <p className="text-lg font-bold text-green-800">
-                  {formatCurrency(transactions.totalIncome)}
+                  {formatCurrency(transactions.totalIncome || 0)}
                 </p>
               </div>
             </motion.div>
@@ -897,7 +915,7 @@ const IncomeExpenseChart = ({ transactions }) => {
               <div>
                 <p className="text-sm font-medium text-red-700">Chi tiêu</p>
                 <p className="text-lg font-bold text-red-800">
-                  {formatCurrency(transactions.totalExpense)}
+                  {formatCurrency(transactions.totalExpense || 0)}
                 </p>
                 <p className="text-xs text-red-600 mt-1">
                   {percentage}% so với thu nhập
@@ -911,7 +929,7 @@ const IncomeExpenseChart = ({ transactions }) => {
               className={`flex items-center space-x-4 p-4 rounded-xl border ${
                 difference >= 0 ? "bg-blue-50 border-blue-100" : "bg-orange-50 border-orange-100"
               }`}
-          >
+            >
               <div
                 className={`p-2 rounded-lg ${
                   difference >= 0 ? "bg-blue-500" : "bg-orange-500"
@@ -948,7 +966,7 @@ const IncomeExpenseChart = ({ transactions }) => {
                 </motion.div>
               </div>
             </motion.div>
-            </div>
+          </div>
         )}
 
         {/* Chart */}
@@ -957,47 +975,47 @@ const IncomeExpenseChart = ({ transactions }) => {
             viewMode === 'split' ? 'lg:col-span-2' : ''
           } h-72 bg-gray-50 rounded-xl p-4 border border-gray-100`}>
             {chartType === 'bar' ? (
-          <Bar
-            data={chartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
+              <Bar
+                data={chartData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
                       backgroundColor: "rgba(0, 0, 0, 0.8)",
                       cornerRadius: 8,
                       padding: 12,
                       titleFont: { size: 12, weight: "bold" },
                       bodyFont: { size: 12 },
-                  callbacks: {
-                    label: (context) => formatCurrency(context.raw),
+                      callbacks: {
+                        label: (context) => formatCurrency(context.raw),
+                      },
+                    },
                   },
-                },
-              },
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  grid: {
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      grid: {
                         color: "rgba(0, 0, 0, 0.03)",
-                    drawBorder: false,
-                  },
-                  ticks: {
+                        drawBorder: false,
+                      },
+                      ticks: {
                         font: { size: 11 },
-                    color: "#6B7280",
+                        color: "#6B7280",
                         callback: (value) => formatCurrency(value).replace("₫", ""),
-                  },
-                },
-                x: {
-                  grid: { display: false },
-                  ticks: {
+                      },
+                    },
+                    x: {
+                      grid: { display: false },
+                      ticks: {
                         font: { size: 12, weight: "600" },
-                    color: "#374151",
+                        color: "#374151",
+                      },
+                    },
                   },
-                },
-              },
-            }}
-          />
+                }}
+              />
             ) : (
               <Line
                 data={chartData}
@@ -1041,7 +1059,7 @@ const IncomeExpenseChart = ({ transactions }) => {
                 }}
               />
             )}
-        </div>
+          </div>
         )}
       </div>
     </motion.div>
@@ -1810,12 +1828,9 @@ const Overview = () => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(null)
   const navigate = useNavigate()
-
-  // Add missing state variables
   const [viewMode, setViewMode] = useState('list')
   const [currentSlide, setCurrentSlide] = useState(0)
 
-  // Define slides array
   const slides = [
     {
       component: <AccountCard accounts={data?.accounts || { list: [], totalBalance: 0 }} loading={loadingAccounts} navigate={navigate} />,
@@ -1849,7 +1864,6 @@ const Overview = () => {
     }
   ]
 
-  // Add slide change handler
   const handleSlideChange = (direction) => {
     if (direction === 'next') {
       setCurrentSlide((prev) => (prev + 1) % slides.length)
@@ -1858,7 +1872,6 @@ const Overview = () => {
     }
   }
 
-  // Sanitize userId
   const userId = localStorage.getItem("userId")?.replace(/[^\w-]/g, "")
 
   useEffect(() => {
@@ -1874,7 +1887,6 @@ const Overview = () => {
     }
   }, [userId, navigate])
 
-  // Debounced fetch data
   const fetchData = debounce(async () => {
     if (!userId) return
 
@@ -1885,7 +1897,7 @@ const Overview = () => {
       setLoadingDebts(true)
       setIsRefreshing(true)
 
-      const res = await axios.get(`${API_URL}/overview/${userId}?range=${timeRange}`)
+      const res = await axios.get(`${API_URL}/overview/${userId}?range=${timeRange.toLowerCase()}`)
       console.log("Overview fetched:", res.data)
       setData(res.data)
       setLastUpdated(new Date())
@@ -1937,14 +1949,20 @@ const Overview = () => {
   }
 
   const handleTimeRangeChange = (newRange) => {
-    setTimeRange(newRange)
-    toast.info(`Đang tải dữ liệu cho ${newRange === 'week' ? 'tuần này' : newRange === 'month' ? 'tháng này' : 'năm nay'}...`, {
+    const rangeMapping = {
+      'Tuần': 'week',
+      'Tháng': 'month',
+      'Quý': 'quarter',
+      'Năm': 'year'
+    }
+    const newTimeRange = rangeMapping[newRange] || 'month'
+    setTimeRange(newTimeRange)
+    toast.info(`Đang tải dữ liệu cho ${newRange.toLowerCase()}...`, {
       position: "top-right",
       autoClose: 2000,
     })
   }
 
-  // Trong component Overview, thêm handlers cho swipe
   const handlers = useSwipeable({
     onSwipedLeft: () => handleSlideChange('next'),
     onSwipedRight: () => handleSlideChange('prev'),
@@ -1976,10 +1994,10 @@ const Overview = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-            onClick={() => window.location.reload()}
+              onClick={() => window.location.reload()}
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl font-semibold hover:from-blue-600 hover:to-indigo-700 transform transition-all duration-300 shadow-lg hover:shadow-xl"
-          >
-            Thử lại
+            >
+              Thử lại
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -1989,7 +2007,7 @@ const Overview = () => {
             >
               Thêm tài khoản
             </motion.button>
-        </div>
+          </div>
         </motion.div>
       </motion.div>
     )
@@ -2008,32 +2026,24 @@ const Overview = () => {
       />
 
       <div className="max-w-7xl mx-auto">
-
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row items-start justify-between mb-8 bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50"
         >
-          {/* Top row in Header (Title + Weather) */}
           <div className="flex flex-col md:flex-row items-start justify-between w-full mb-4 md:mb-0">
-            {/* Title and Description */}
             <div className="flex-grow min-w-0 mr-4 mb-4 md:mb-0">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                 Tổng Quan Tài Chính
               </h1>
               <p className="text-gray-500 mt-2">Quản lý và theo dõi tài chính của bạn một cách thông minh</p>
             </div>
-            
-            {/* Weather Card (Hidden on small screens) */}
             <div className="hidden md:block flex-shrink-0">
               {/* {showWeatherCard && <WeatherCard />} */}
             </div>
           </div>
-
-          {/* Controls (View Mode, Time Range, Refresh) - Bottom row on MD, Right on LG */}
           <div className="mt-0 flex items-center space-x-4 flex-shrink-0 self-end md:self-start">
-            {/* View Mode Toggle */}
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-gray-100">
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -2066,8 +2076,6 @@ const Overview = () => {
                 List View
               </motion.button>
             </div>
-
-            {/* Time Range Selector */}
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-gray-100">
               {["Tuần", "Tháng", "Quý", "Năm"].map((range) => (
                 <motion.button
@@ -2075,23 +2083,25 @@ const Overview = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleTimeRangeChange(range)}
+                  disabled={isRefreshing}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    timeRange === range
+                    timeRange === range.toLowerCase()
                       ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white shadow-md"
                       : "text-gray-600 hover:bg-gray-50"
-                  }`}
+                  } ${isRefreshing ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {range}
                 </motion.button>
               ))}
             </div>
-            
-            {/* Refresh Button */}
             <motion.button
               whileHover={{ scale: 1.05, rotate: 180 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleRefresh}
-              className="p-2 bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:text-emerald-600 transition-colors duration-300"
+              disabled={isRefreshing}
+              className={`p-2 bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:text-emerald-600 transition-colors duration-300 ${
+                isRefreshing ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               <ArrowPathIcon className="h-5 w-5" />
             </motion.button>
@@ -2101,71 +2111,63 @@ const Overview = () => {
         {/* Main Content */}
         {viewMode === 'slideshow' ? (
           <div className="relative">
-            {/* Slideshow Content */}
-            <div className="relative">
-              {/* Slideshow Content */}
-              <div {...handlers}>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentSlide}
-                    initial={{ opacity: 0, x: 100 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{ duration: 0.3 }}
-                    className="relative"
-                  >
-                    <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50">
-                      {slides[currentSlide].component}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Mini Preview - Moved below slideshow */}
-              <div className="mt-8 flex justify-center space-x-4">
-                {slides.map((slide, index) => (
-                  <motion.button
-                    key={index}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setCurrentSlide(index)}
-                    className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                      currentSlide === index 
-                        ? "border-emerald-500 scale-110" 
-                        : "border-transparent opacity-50 hover:opacity-100"
-                    }`}
-                  >
-                    <div className={`w-full h-full bg-gradient-to-br ${slide.color} p-2 flex items-center justify-center`}>
-                      {React.createElement(slide.icon, {
-                        className: "h-6 w-6 text-white"
-                      })}
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
+            <div {...handlers}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative"
+                >
+                  <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50">
+                    {slides[currentSlide].component}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <div className="mt-8 flex justify-center space-x-4">
+              {slides.map((slide, index) => (
+                <motion.button
+                  key={index}
+                  whileHover={{ scale: 1.2 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                    currentSlide === index 
+                      ? "border-emerald-500 scale-110" 
+                      : "border-transparent opacity-50 hover:opacity-100"
+                  }`}
+                >
+                  <div className={`w-full h-full bg-gradient-to-br ${slide.color} p-2 flex items-center justify-center`}>
+                    {React.createElement(slide.icon, {
+                      className: "h-6 w-6 text-white"
+                    })}
+                  </div>
+                </motion.button>
+              ))}
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column - Accounts & Savings */}
             <div className="lg:col-span-4 space-y-6">
               <AccountCard accounts={data?.accounts || { list: [], totalBalance: 0 }} loading={loadingAccounts} navigate={navigate} />
               <SavingGoalCard savingGoals={data?.savingGoals || { list: [], totalSavings: 0 }} loading={loadingSavingGoals} navigate={navigate} />
             </div>
-
-            {/* Middle Column - Charts & Budget */}
             <div className="lg:col-span-5 space-y-6">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50"
               >
-                <IncomeExpenseChart transactions={data?.transactions || { totalIncome: 0, totalExpense: 0 }} />
+                <IncomeExpenseChart 
+                  transactions={data?.transactions || { totalIncome: 0, totalExpense: 0 }} 
+                  timeRange={timeRange}
+                />
               </motion.div>
               <BudgetCard budgets={data?.budgets || []} navigate={navigate} />
             </div>
-
-            {/* Right Column - Investments & Debts */}
             <div className="lg:col-span-3 space-y-6">
               <InvestmentCard investments={data?.investments || { list: [], totalInvestment: 0, totalProfit: 0 }} loading={loadingInvestments} navigate={navigate} />
               <DebtCard debts={data?.debts || { list: [], totalDebt: 0 }} loading={loadingDebts} navigate={navigate} />
