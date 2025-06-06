@@ -10,7 +10,7 @@ import {
   BanknotesIcon, 
   ChartBarIcon,
   CalendarIcon,
-  InformationCircleIcon,
+  CreditCardIcon,
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
@@ -20,7 +20,9 @@ import {
   ShareIcon,
   BellIcon,
   ChartPieIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  XMarkIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Title } from 'chart.js';
 import { Pie, Line } from 'react-chartjs-2';
@@ -706,42 +708,38 @@ const DebtManagement = () => {
         }}
       />
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800">Quản lý khoản nợ</h2>
-          <div className="flex space-x-4">
-            <motion.button
-              onClick={() => setShowStats(!showStats)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200 flex items-center space-x-2"
-            >
-              <ChartPieIcon className="h-5 w-5" />
-              <span>Thống kê</span>
-            </motion.button>
-            <motion.button
-            onClick={openAddModal}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center space-x-2"
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg"
           >
-              <PlusIcon className="h-5 w-5" />
-            <span>Thêm khoản nợ</span>
-            </motion.button>
-          </div>
-        </div>
+            <CreditCardIcon className="w-10 h-10 text-white" />
+          </motion.div>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            Khoản Nợ
+          </h2>
+          <p className="text-gray-600 font-medium">Theo dõi và quản lý các khoản nợ của bạn</p>
+        </motion.div>
 
         {/* Tổng quan */}
         <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-700 mb-2">Tổng nợ</h3>
-            <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold text-blue-600">
                 {stats.totalDebt.toLocaleString()} VNĐ
               </p>
               <p className="text-sm text-gray-500 mt-2">
                 Còn lại: {stats.remainingDebt.toLocaleString()} VNĐ
-            </p>
-          </div>
+              </p>
+            </div>
             <div className="bg-green-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-700 mb-2">Đã trả</h3>
               <p className="text-2xl font-bold text-green-600">
@@ -763,62 +761,28 @@ const DebtManagement = () => {
           </div>
         </motion.div>
 
-        {/* Thống kê */}
-        {showStats && (
-          <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h3 className="text-xl font-semibold mb-4">Thống kê</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-lg font-medium mb-2">Phân bố trạng thái</h4>
-                <div className="h-64">
-                  <Pie data={chartData.pie} options={{ maintainAspectRatio: false }} />
-                </div>
-              </div>
-              <div>
-                <h4 className="text-lg font-medium mb-2">Diễn biến khoản nợ</h4>
-                <div className="h-64">
-                  <Line 
-                    data={chartData.line} 
-                    options={{ 
-                      maintainAspectRatio: false,
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          ticks: {
-                            callback: value => value.toLocaleString() + ' VNĐ'
-                          }
-                        }
-                      }
-                    }} 
-                  />
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
         {/* Bộ lọc và tìm kiếm */}
-        <motion.div variants={itemVariants} className="bg-white p-4 rounded-lg shadow-md mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center space-x-4">
-            <label className="text-gray-700 font-medium">Lọc trạng thái:</label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Tất cả">Tất cả</option>
-              <option value="Hoạt động">Hoạt động</option>
-              <option value="Đã thanh toán">Đã thanh toán</option>
-              <option value="Quá hạn">Quá hạn</option>
-            </select>
-          </div>
+        <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="flex items-center space-x-4">
-              <label className="text-gray-700 font-medium">Sắp xếp theo:</label>
+              <label className="text-gray-700 font-medium whitespace-nowrap">Lọc:</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              >
+                <option value="Tất cả">Tất cả</option>
+                <option value="Hoạt động">Hoạt động</option>
+                <option value="Đã thanh toán">Đã thanh toán</option>
+                <option value="Quá hạn">Quá hạn</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-4">
+              <label className="text-gray-700 font-medium whitespace-nowrap">Sắp xếp:</label>
               <select
                 value={sortConfig.key}
                 onChange={(e) => handleSort(e.target.value)}
-                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               >
                 <option value="ngayBatDau">Ngày bắt đầu</option>
                 <option value="soTien">Số tiền</option>
@@ -837,7 +801,7 @@ const DebtManagement = () => {
                   <ArrowDownIcon className="h-5 w-5" />
                 )}
               </motion.button>
-        </div>
+            </div>
             <div className="relative">
               <input
                 type="text"
@@ -848,8 +812,151 @@ const DebtManagement = () => {
               />
               <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
             </div>
+            <div className="flex items-center space-x-4">
+              <motion.button
+                onClick={() => setShowStats(!showStats)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gray-50 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition duration-200 flex items-center space-x-2 border border-gray-200 flex-1"
+              >
+                <ChartPieIcon className="h-5 w-5" />
+                <span>{showStats ? 'Ẩn Thống kê' : 'Thống kê'}</span>
+              </motion.button>
+              <motion.button
+                onClick={openAddModal}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center space-x-2 flex-1"
+              >
+                <PlusIcon className="h-5 w-5" />
+                <span>Khoản nợ</span>
+              </motion.button>
+            </div>
           </div>
         </motion.div>
+
+        {/* Bảng thống kê */}
+        <AnimatePresence>
+          {showStats && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Biểu đồ tròn */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                    <ChartPieIcon className="h-5 w-5 text-indigo-600" />
+                    <span>Phân bố trạng thái</span>
+                  </h3>
+                  <div className="h-64">
+                    <Pie
+                      data={chartData.pie}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                            labels: {
+                              padding: 20,
+                              font: {
+                                size: 12
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Biểu đồ đường */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                    <ChartBarIcon className="h-5 w-5 text-blue-600" />
+                    <span>Xu hướng khoản nợ</span>
+                  </h3>
+                  <div className="h-64">
+                    <Line
+                      data={chartData.line}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            display: false
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            ticks: {
+                              callback: function(value) {
+                                return value.toLocaleString() + ' VNĐ';
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Thống kê chi tiết */}
+                <div className="md:col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-blue-800 mb-1">Tổng số khoản nợ</h4>
+                      <p className="text-2xl font-bold text-blue-600">{debts.length}</p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-blue-600">Hoạt động:</span>
+                        <span className="text-sm font-medium text-blue-800">{stats.activeDebts}</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-green-800 mb-1">Đã thanh toán</h4>
+                      <p className="text-2xl font-bold text-green-600">{stats.paidDebts}</p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-green-600">Tỷ lệ:</span>
+                        <span className="text-sm font-medium text-green-800">
+                          {debts.length ? ((stats.paidDebts / debts.length) * 100).toFixed(1) : 0}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-red-800 mb-1">Quá hạn</h4>
+                      <p className="text-2xl font-bold text-red-600">{stats.overdueDebts}</p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-red-600">Tỷ lệ:</span>
+                        <span className="text-sm font-medium text-red-800">
+                          {debts.length ? ((stats.overdueDebts / debts.length) * 100).toFixed(1) : 0}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-purple-800 mb-1">Tổng lãi suất</h4>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {stats.totalInterest.toLocaleString()} VNĐ
+                      </p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-purple-600">Trung bình:</span>
+                        <span className="text-sm font-medium text-purple-800">
+                          {debts.length ? (stats.totalInterest / debts.length).toLocaleString() : 0} VNĐ
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Danh sách khoản nợ */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -863,7 +970,7 @@ const DebtManagement = () => {
             ))
           ) : filteredAndSortedDebts.length === 0 ? (
             <div className="col-span-full bg-white rounded-lg shadow-md p-8 text-center">
-              <BanknotesIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <CreditCardIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Chưa có khoản nợ nào</h3>
               <p className="text-gray-500">Hãy thêm khoản nợ đầu tiên của bạn</p>
             </div>
@@ -903,7 +1010,7 @@ const DebtManagement = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500">Số tiền nợ:</span>
-                      <span className="font-semibold text-gray-800">
+                      <span className="font-semibold text-indigo-800">
                         {debt.soTien.toLocaleString()} VNĐ
                       </span>
                     </div>
@@ -922,14 +1029,26 @@ const DebtManagement = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-500">Tiến độ:</span>
-                      <div className="w-24 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ width: `${progress}%` }}
-                        />
+                    <div className="mt-4">
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(progress, 100)}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className={`h-2.5 rounded-full ${
+                            progress >= 100
+                              ? 'bg-gradient-to-r from-emerald-500 to-green-600'
+                              : progress >= 75
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                              : progress >= 50
+                              ? 'bg-gradient-to-r from-yellow-500 to-orange-600'
+                              : 'bg-gradient-to-r from-red-500 to-pink-600'
+                          }`}
+                        ></motion.div>
                       </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {progress.toFixed(1)}% hoàn thành
+                      </p>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -988,7 +1107,7 @@ const DebtManagement = () => {
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                         title="Trả nợ"
                       >
-                        <BanknotesIcon className="h-5 w-5" />
+                        <CreditCardIcon className="h-5 w-5" />
                       </motion.button>
                       <motion.button
                         onClick={() => openEditModal(debt)}
@@ -1018,203 +1137,275 @@ const DebtManagement = () => {
 
         {/* Modal thêm/sửa/trả nợ */}
         <AnimatePresence>
-        {showModal && (
+          {showModal && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             >
               <motion.div
-                initial={{ scale: 0.8, y: 50 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.8, y: 50 }}
-                className="bg-white rounded-lg p-6 w-full max-w-lg"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
               >
-              <h3 className="text-xl font-semibold mb-4">
-                {modalType === 'add' ? 'Thêm khoản nợ' : modalType === 'edit' ? 'Sửa khoản nợ' : 'Trả nợ'}
-              </h3>
-              {error && <p className="text-red-500 mb-4">{error}</p>}
-                <form onSubmit={modalType === 'pay' ? handlePayDebt : handleSubmit} className="space-y-4">
+                <div className="p-6 border-b border-gray-100/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl">
+                        <CreditCardIcon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        {modalType === 'add' ? 'Thêm Khoản Nợ' : modalType === 'edit' ? 'Sửa Khoản Nợ' : 'Trả Nợ'}
+                      </h3>
+                    </div>
+                    <motion.button
+                      onClick={closeModal}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-all duration-200"
+                    >
+                      <XMarkIcon className="w-6 h-6" />
+                    </motion.button>
+                  </div>
+                </div>
+
+                <form onSubmit={modalType === 'pay' ? handlePayDebt : handleSubmit} className="p-6 space-y-6">
+                  <AnimatePresence>
+                    {error && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="p-4 bg-red-50/80 backdrop-blur-sm text-red-700 rounded-2xl border border-red-200/50 flex items-center space-x-3"
+                      >
+                        <ExclamationCircleIcon className="w-5 h-5 text-red-600" />
+                        <span className="font-medium">{error}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   {modalType === 'pay' ? (
                     <div>
-                      <label className="block text-gray-700 font-medium mb-1">
-                        Số tiền trả
-                        <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Số tiền bạn muốn trả cho khoản nợ" />
+                      <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                        {/* <CreditCardIcon className="h-4 w-4 text-blue-600" /> */}
+                        <span>Số Tiền Trả</span>
                       </label>
-                      <input
-                        type="number"
-                        value={soTienTra}
-                        onChange={(e) => setSoTienTra(e.target.value)}
-                        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                        step="0.01"
-                        min="0.01"
-                        placeholder="Số tiền trả"
-                      />
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={soTienTra}
+                          onChange={(e) => setSoTienTra(e.target.value)}
+                          className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-blue-500/20 focus:shadow-lg transition-all duration-300"
+                          required
+                          step="0.01"
+                          min="0.01"
+                          placeholder="..."
+                        />
+                        <BanknotesIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-500" />
+                      </div>
                     </div>
                   ) : (
-                    <>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-gray-700 font-medium mb-1">
-                            Số tiền nợ
-                            <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Tổng số tiền nợ ban đầu" />
-                    </label>
-                    <input
-                      type="number"
-                      value={soTien}
-                      onChange={(e) => setSoTien(e.target.value)}
-                            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      step="0.01"
-                      min="0.01"
-                      placeholder="Số tiền nợ"
-                    />
-                  </div>
-                        <div>
-                          <label className="block text-gray-700 font-medium mb-1">
-                            Số tiền đã trả
-                            <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Số tiền đã trả cho khoản nợ" />
-                    </label>
-                    <input
-                      type="number"
-                      value={soTienDaTra}
-                      onChange={(e) => setSoTienDaTra(e.target.value)}
-                            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      step="0.01"
-                      min="0"
-                      placeholder="Số tiền đã trả"
-                    />
-                  </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-gray-700 font-medium mb-1">
-                            Lãi suất (%)
-                            <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Lãi suất hàng tháng" />
-                    </label>
-                    <input
-                      type="number"
-                      value={laiSuat}
-                      onChange={(e) => setLaiSuat(e.target.value)}
-                            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      step="0.01"
-                      min="0"
-                            placeholder="Lãi suất"
-                    />
-                  </div>
-                        <div>
-                          <label className="block text-gray-700 font-medium mb-1">
-                            Kỳ hạn (tháng)
-                            <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Thời gian trả nợ (tháng)" />
-                    </label>
-                    <input
-                      type="number"
-                      value={kyHan}
-                      onChange={(e) => setKyHan(e.target.value)}
-                            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      min="1"
-                            placeholder="Kỳ hạn"
-                    />
-                  </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                  <div>
-                          <label className="block text-gray-700 font-medium mb-1">
-                            Ngày bắt đầu
-                            <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Ngày bắt đầu khoản nợ" />
-                          </label>
-                    <input
-                      type="date"
-                      value={ngayBatDau}
-                      onChange={(e) => setNgayBatDau(e.target.value)}
-                            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                          <label className="block text-gray-700 font-medium mb-1">
-                            Ngày kết thúc
-                            <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Ngày dự kiến hoàn thành" />
-                          </label>
-                    <input
-                      type="date"
-                      value={ngayKetThuc}
-                      onChange={(e) => setNgayKetThuc(e.target.value)}
-                            className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                      </div>
-
-                  <div>
-                        <label className="block text-gray-700 font-medium mb-1">
-                          Ngày trả tiếp theo
-                          <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Ngày trả nợ tiếp theo" />
-                        </label>
-                    <input
-                      type="date"
-                      value={ngayTraTiepTheo}
-                      onChange={(e) => setNgayTraTiepTheo(e.target.value)}
-                          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                        <label className="block text-gray-700 font-medium mb-1">
-                          Ghi chú
-                          <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Thông tin bổ sung" />
-                        </label>
-                        <textarea
-                          value={ghiChu}
-                          onChange={(e) => setGhiChu(e.target.value)}
-                          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Ghi chú (tối đa 200 ký tự)"
-                          rows="3"
-                          maxLength={200}
-                        />
-                        <p className="text-sm text-gray-500 mt-1">{ghiChu.length}/200 ký tự</p>
-                      </div>
-
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Số tiền nợ */}
                       <div>
-                        <label className="block text-gray-700 font-medium mb-1">
-                          Trạng thái
-                          <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Trạng thái hiện tại của khoản nợ" />
+                        <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                          <BanknotesIcon className="h-4 w-4 text-blue-600" />
+                          <span>Số Tiền Nợ</span>
                         </label>
-                    <select
-                      value={trangThai}
-                      onChange={(e) => setTrangThai(e.target.value)}
-                          className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="Hoạt động">Hoạt động</option>
-                      <option value="Đã thanh toán">Đã thanh toán</option>
-                      <option value="Quá hạn">Quá hạn</option>
-                    </select>
-                  </div>
-                    </>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={soTien}
+                            onChange={(e) => setSoTien(e.target.value)}
+                            className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-blue-500/20 focus:shadow-lg transition-all duration-300"
+                            required
+                            step="0.01"
+                            min="0.01"
+                            placeholder="Số tiền nợ"
+                          />
+                          <BanknotesIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-500" />
+                        </div>
+                      </div>
+
+                      {/* Số tiền đã trả */}
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                          <ChartBarIcon className="h-4 w-4 text-green-600" />
+                          <span>Số Tiền Đã Trả</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={soTienDaTra}
+                            onChange={(e) => setSoTienDaTra(e.target.value)}
+                            className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-green-500/20 focus:shadow-lg transition-all duration-300"
+                            step="0.01"
+                            min="0"
+                            placeholder="Số tiền đã trả"
+                          />
+                          <ChartBarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-500" />
+                        </div>
+                      </div>
+
+                      {/* Lãi suất */}
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                          <ChartPieIcon className="h-4 w-4 text-purple-600" />
+                          <span>Lãi Suất (%)</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={laiSuat}
+                            onChange={(e) => setLaiSuat(e.target.value)}
+                            className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-purple-500/20 focus:shadow-lg transition-all duration-300"
+                            step="0.01"
+                            min="0"
+                            placeholder="Lãi suất"
+                          />
+                          <ChartPieIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-500" />
+                        </div>
+                      </div>
+
+                      {/* Kỳ hạn */}
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                          <ClockIcon className="h-4 w-4 text-indigo-600" />
+                          <span>Kỳ Hạn (tháng)</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={kyHan}
+                            onChange={(e) => setKyHan(e.target.value)}
+                            className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-indigo-500/20 focus:shadow-lg transition-all duration-300"
+                            required
+                            min="1"
+                            placeholder="Kỳ hạn"
+                          />
+                          <ClockIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-indigo-500" />
+                        </div>
+                      </div>
+
+                      {/* Ngày bắt đầu */}
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                          <CalendarIcon className="h-4 w-4 text-pink-600" />
+                          <span>Ngày Bắt Đầu</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            value={ngayBatDau}
+                            onChange={(e) => setNgayBatDau(e.target.value)}
+                            className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-pink-500/20 focus:shadow-lg transition-all duration-300"
+                            required
+                          />
+                          <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-pink-500" />
+                        </div>
+                      </div>
+
+                      {/* Ngày kết thúc */}
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                          <CalendarIcon className="h-4 w-4 text-pink-600" />
+                          <span>Ngày Kết Thúc</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            value={ngayKetThuc}
+                            onChange={(e) => setNgayKetThuc(e.target.value)}
+                            className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-pink-500/20 focus:shadow-lg transition-all duration-300"
+                          />
+                          <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-pink-500" />
+                        </div>
+                      </div>
+
+                      {/* Ngày trả tiếp theo */}
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                          <CalendarIcon className="h-4 w-4 text-pink-600" />
+                          <span>Ngày Trả Tiếp Theo</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            value={ngayTraTiepTheo}
+                            onChange={(e) => setNgayTraTiepTheo(e.target.value)}
+                            className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-pink-500/20 focus:shadow-lg transition-all duration-300"
+                          />
+                          <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-pink-500" />
+                        </div>
+                      </div>
+
+                      {/* Ghi chú */}
+                      <div className="md:col-span-2">
+                        <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                          <DocumentTextIcon className="h-4 w-4 text-gray-600" />
+                          <span>Ghi Chú</span>
+                        </label>
+                        <div className="relative">
+                          <textarea
+                            value={ghiChu}
+                            onChange={(e) => setGhiChu(e.target.value)}
+                            className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-gray-500/20 focus:shadow-lg transition-all duration-300 min-h-[100px] resize-none"
+                            placeholder="Nhập ghi chú (tối đa 200 ký tự)"
+                            maxLength={200}
+                          />
+                          <DocumentTextIcon className="absolute left-4 top-4 h-5 w-5 text-gray-500" />
+                        </div>
+                      </div>
+
+                      {/* Trạng thái */}
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                          <CheckCircleIcon className="h-4 w-4 text-emerald-600" />
+                          <span>Trạng Thái</span>
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={trangThai}
+                            onChange={(e) => setTrangThai(e.target.value)}
+                            className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-emerald-500/20 focus:shadow-lg transition-all duration-300 appearance-none"
+                          >
+                            <option value="Hoạt động">Hoạt động</option>
+                            <option value="Đã thanh toán">Đã thanh toán</option>
+                            <option value="Quá hạn">Quá hạn</option>
+                          </select>
+                          <CheckCircleIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-emerald-500" />
+                        </div>
+                      </div>
+                    </div>
                   )}
 
-                  <div className="flex space-x-4">
-                    <motion.button
-                      type="submit"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-200"
-                      disabled={modalType === 'pay' ? !soTienTra || parseFloat(soTienTra) <= 0 : !soTien || !ngayBatDau || !kyHan}
-                    >
-                      {modalType === 'add' ? 'Thêm khoản nợ' : modalType === 'edit' ? 'Cập nhật khoản nợ' : 'Trả nợ'}
-                    </motion.button>
+                  <div className="flex space-x-4 pt-4">
                     <motion.button
                       type="button"
                       onClick={closeModal}
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition duration-200"
+                      className="flex-1 px-6 py-4 bg-gray-200/80 backdrop-blur-sm text-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:bg-gray-300/80"
                     >
-                      Hủy
+                      <XMarkIcon className="w-5 h-5" />
+                      <span>Hủy</span>
+                    </motion.button>
+
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:from-emerald-600 hover:to-blue-700"
+                    >
+                      <CheckCircleIcon className="w-5 h-5" />
+                      <span>
+                        {modalType === 'add' ? 'Thêm Khoản Nợ' : 
+                         modalType === 'edit' ? 'Cập Nhật Khoản Nợ' : 
+                         'Trả Nợ'}
+                      </span>
                     </motion.button>
                   </div>
                 </form>
@@ -1230,51 +1421,25 @@ const DebtManagement = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             >
               <motion.div
-                initial={{ scale: 0.8, y: 50 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.8, y: 50 }}
-                className="bg-white rounded-lg p-6 w-full max-w-md"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 w-full max-w-lg max-h-[90vh] overflow-y-auto"
               >
-                <h3 className="text-xl font-semibold mb-4">Thêm nhắc nhở</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-1">
-                      Ngày nhắc nhở
-                      <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Ngày bạn muốn được nhắc nhở" />
-                    </label>
-                    <input
-                      type="datetime-local"
-                      value={reminderDate}
-                      onChange={(e) => setReminderDate(e.target.value)}
-                      className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-1">
-                      Ghi chú nhắc nhở
-                      <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Nội dung nhắc nhở" />
-                    </label>
-                    <textarea
-                      value={reminderNote}
-                      onChange={(e) => setReminderNote(e.target.value)}
-                      className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Nhập nội dung nhắc nhở..."
-                      rows="3"
-                    />
-                  </div>
-                  <div className="flex space-x-4">
-                    <motion.button
-                      onClick={handleAddReminder}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-200"
-                    >
-                      Thêm nhắc nhở
-                    </motion.button>
+                <div className="p-6 border-b border-gray-100/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl">
+                        <BellIcon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        Thêm Nhắc Nhở
+                      </h3>
+                    </div>
                     <motion.button
                       onClick={() => {
                         setShowReminderModal(false);
@@ -1282,19 +1447,87 @@ const DebtManagement = () => {
                         setReminderNote('');
                         setSelectedDebt(null);
                       }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition duration-200"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-all duration-200"
                     >
-                      Hủy
+                      <XMarkIcon className="w-6 h-6" />
                     </motion.button>
                   </div>
                 </div>
+
+                <form onSubmit={handleAddReminder} className="p-6 space-y-6">
+                  <div className="space-y-6">
+                    {/* Ngày nhắc nhở */}
+                    <div>
+                      <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                        <CalendarIcon className="h-4 w-4 text-indigo-600" />
+                        <span>Ngày Nhắc Nhở</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="datetime-local"
+                          value={reminderDate}
+                          onChange={(e) => setReminderDate(e.target.value)}
+                          className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-indigo-500/20 focus:shadow-lg transition-all duration-300"
+                          required
+                        />
+                        <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-indigo-500" />
+                      </div>
+                    </div>
+
+                    {/* Ghi chú nhắc nhở */}
+                    <div>
+                      <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                        <DocumentTextIcon className="h-4 w-4 text-gray-600" />
+                        <span>Ghi Chú Nhắc Nhở</span>
+                      </label>
+                      <div className="relative">
+                        <textarea
+                          value={reminderNote}
+                          onChange={(e) => setReminderNote(e.target.value)}
+                          className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-gray-500/20 focus:shadow-lg transition-all duration-300 min-h-[100px] resize-none"
+                          placeholder="Nhập nội dung nhắc nhở..."
+                          rows="3"
+                        />
+                        <DocumentTextIcon className="absolute left-4 top-4 h-5 w-5 text-gray-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-4 pt-4">
+                    <motion.button
+                      type="button"
+                      onClick={() => {
+                        setShowReminderModal(false);
+                        setReminderDate('');
+                        setReminderNote('');
+                        setSelectedDebt(null);
+                      }}
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 px-6 py-4 bg-gray-200/80 backdrop-blur-sm text-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:bg-gray-300/80"
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                      <span>Hủy</span>
+                    </motion.button>
+
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 px-6 py-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:from-emerald-600 hover:to-blue-700"
+                    >
+                      <BellIcon className="w-5 h-5" />
+                      <span>Thêm Nhắc Nhở</span>
+                    </motion.button>
+                  </div>
+                </form>
               </motion.div>
             </motion.div>
-              )}
+          )}
         </AnimatePresence>
-            </div>
+      </div>
     </motion.div>
   );
 };

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect, useContext, useRef } from "react"
 import io from "socket.io-client"
 import { AuthContext } from "../context/AuthContext"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -17,6 +17,8 @@ import {
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline"
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from "chart.js"
+import VoiceInput from './VoiceInput';
+import './VoiceInput.css';
 
 const socket = io("http://localhost:5000", { autoConnect: false })
 
@@ -34,6 +36,10 @@ const Chatbot = () => {
   ])
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const messagesEndRef = useRef(null)
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('idle');
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     if (!user || ["/", "/register"].includes(location.pathname)) {
@@ -114,6 +120,39 @@ const Chatbot = () => {
     }
     fetchNotifications()
 
+    // Initialize speech recognition
+    if ('webkitSpeechRecognition' in window) {
+      recognitionRef.current = new window.webkitSpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'vi-VN';
+
+      recognitionRef.current.onstart = () => {
+        setIsRecording(true);
+        setVoiceStatus('recording');
+      };
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setVoiceStatus('success');
+        setTimeout(() => {
+          sendMessage();
+        }, 500);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setVoiceStatus('error');
+        setIsRecording(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsRecording(false);
+        setVoiceStatus('idle');
+      };
+    }
+
     return () => {
       socket.off("chatResponse")
       socket.off("notification")
@@ -121,6 +160,11 @@ const Chatbot = () => {
       socket.disconnect()
     }
   }, [user, location.pathname, navigate])
+
+  // Auto scroll to the latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = () => {
     if (!input.trim() || !user) return
@@ -154,6 +198,23 @@ const Chatbot = () => {
       minute: "2-digit",
     })
   }
+
+  const handleVoiceInput = () => {
+    if (!recognitionRef.current) {
+      setMessages(prev => [...prev, {
+        text: "Trình duyệt của bạn không hỗ trợ nhận diện giọng nói.",
+        isBot: true,
+        timestamp: new Date()
+      }]);
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+  };
 
   if (!user || ["/", "/register"].includes(location.pathname)) {
     return null
@@ -223,17 +284,44 @@ const Chatbot = () => {
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-emerald-500 to-blue-600 p-6 rounded-t-3xl">
-              <div className="flex items-center space-x-3">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                  className="bg-white/20 p-2 rounded-full"
-                >
-                  <SparklesIcon className="h-6 w-6 text-white" />
-                </motion.div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">Trợ Lý Chi Tiêu</h3>
-                  <p className="text-white/80 text-sm">Luôn sẵn sàng hỗ trợ bạn</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+                    className="bg-white/20 p-2 rounded-full"
+                  >
+                    <SparklesIcon className="h-6 w-6 text-white" />
+                  </motion.div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">Trợ Lý Chi Tiêu</h3>
+                    <p className="text-white/80 text-sm">Luôn sẵn sàng hỗ trợ bạn</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  {/* Recording Status */}
+                  <AnimatePresence>
+                    {isRecording && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full"
+                      >
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                          className="h-2 w-2 bg-red-500 rounded-full"
+                        />
+                        <span className="text-white text-sm">Đang ghi âm...</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <VoiceInput
+                    onVoiceInput={handleVoiceInput}
+                    isRecording={isRecording}
+                    status={voiceStatus}
+                  />
                 </div>
               </div>
             </div>
@@ -264,6 +352,9 @@ const Chatbot = () => {
                   </motion.div>
                 ))}
               </AnimatePresence>
+
+              {/* Scroll to bottom ref */}
+              <div ref={messagesEndRef} />
 
               {/* Typing Indicator */}
               <AnimatePresence>
@@ -296,8 +387,8 @@ const Chatbot = () => {
             </div>
 
             {/* Quick Suggestions */}
-            <div className="p-4 border-t border-gray-100/50 bg-white/80 backdrop-blur-sm">
-              <div className="grid grid-cols-2 gap-2 mb-4">
+            <div className="py-2 px-4 border-t border-gray-100/50 bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-wrap space-x-2 pb-2">
                 {suggestions.map((suggestion, index) => {
                   const IconComponent = suggestion.icon
                   const colorClasses = {
@@ -313,9 +404,7 @@ const Chatbot = () => {
                       onClick={() => handleSuggestion(suggestion.command)}
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`flex items-center space-x-2 p-3 rounded-xl border transition-all duration-200 shadow-sm backdrop-blur-sm ${
-                        colorClasses[suggestion.color]
-                      }`}
+                      className={`flex items-center space-x-1 px-3 py-1 rounded-full border transition-all duration-200 ${colorClasses[suggestion.color]}`}
                     >
                       <IconComponent className="h-4 w-4" />
                       <span className="text-xs font-medium">{suggestion.text}</span>
