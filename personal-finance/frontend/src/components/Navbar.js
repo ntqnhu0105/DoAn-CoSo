@@ -8,13 +8,17 @@ import axios from "axios"
 import { motion, AnimatePresence, useAnimation } from "framer-motion"
 import {
   HomeIcon,
-  CreditCardIcon,
-  BanknotesIcon,
-  ChartBarIcon,
+  WalletIcon,
+  CurrencyDollarIcon,
+  ArchiveBoxIcon,
+  ChartPieIcon,
+  UserCircleIcon,
+  ArrowTrendingUpIcon,
   TagIcon,
   CalculatorIcon,
   FlagIcon,
   DocumentChartBarIcon,
+  ChartBarIcon,
   BellIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
@@ -23,13 +27,14 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  PlayIcon,
-  PauseIcon,
+  DocumentTextIcon,
+  CreditCardIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
   TrashIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
+  ClipboardDocumentListIcon,
   InformationCircleIcon,
   StarIcon,
   CheckIcon,
@@ -64,6 +69,21 @@ const Navbar = () => {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
   const [showBulkActions, setShowBulkActions] = useState(false)
   const tickerRef = useRef(null)
+  const [soundSettings, setSoundSettings] = useState({
+    filterFrequency: 1000,
+    filterQ: 10,
+    lfoFrequency: 5,
+    lfoGain: 50,
+    volume: 0.5,
+    duration: 0.5,
+    delayTime: 0.3,
+    delayFeedback: 0.3,
+    reverbTime: 2.0,
+    distortionAmount: 20,
+    compressorThreshold: -24,
+    compressorRatio: 12
+  })
+  const [showSoundSettings, setShowSoundSettings] = useState(false)
 
   const userId = localStorage.getItem("userId")
   const userName = localStorage.getItem("userName")
@@ -133,15 +153,15 @@ const Navbar = () => {
   const unreadCount = notifications.filter((notif) => !notif.daDoc).length
 
   const financeMenuItems = [
-    { to: "/dashboard", label: "Giao dịch", icon: CreditCardIcon, description: "Quản lý thu chi" },
-    { to: "/accounts", label: "Tài khoản", icon: BanknotesIcon, description: "Tài khoản ngân hàng" },
+    { to: "/dashboard", label: "Giao dịch", icon: DocumentTextIcon, description: "Quản lý thu chi" },
+    { to: "/accounts", label: "Tài khoản", icon: UserCircleIcon, description: "Tài khoản ngân hàng" },
     { to: "/categories", label: "Danh mục", icon: TagIcon, description: "Phân loại chi tiêu" },
     { to: "/budgets", label: "Ngân sách", icon: CalculatorIcon, description: "Lập kế hoạch chi tiêu" },
   ]
 
   const goalsMenuItems = [
-    { to: "/saving-goals", label: "Tiết kiệm", icon: FlagIcon, description: "Mục tiêu tiết kiệm" },
-    { to: "/debts", label: "Khoản nợ", icon: DocumentChartBarIcon, description: "Quản lý nợ vay" },
+    { to: "/saving-goals", label: "Tiết kiệm", icon: ArchiveBoxIcon, description: "Mục tiêu tiết kiệm" },
+    { to: "/debts", label: "Khoản nợ", icon: CreditCardIcon, description: "Quản lý nợ vay" },
   ]
 
   const showDesktopNotification = (notification) => {
@@ -196,7 +216,7 @@ const Navbar = () => {
       setFloatingNotification(notifications[0]);
       const timer = setTimeout(() => {
         setFloatingNotification(null);
-      }, 5000);
+      }, 30000);
       return () => clearTimeout(timer);
     }
   }, [notifications]);
@@ -216,21 +236,103 @@ const Navbar = () => {
     if (!audioContext || !hasInteracted) return;
 
     try {
+      // Tạo các node cơ bản
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      const lfo = audioContext.createOscillator();
+      const lfoGain = audioContext.createGain();
 
-      oscillator.connect(gainNode);
+      // Tạo các node hiệu ứng
+      const delay = audioContext.createDelay();
+      const delayGain = audioContext.createGain();
+      const reverb = audioContext.createConvolver();
+      const distortion = audioContext.createWaveShaper();
+      const compressor = audioContext.createDynamicsCompressor();
+
+      // Cấu hình bộ lọc
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(soundSettings.filterFrequency, audioContext.currentTime);
+      filter.Q.setValueAtTime(soundSettings.filterQ, audioContext.currentTime);
+
+      // Cấu hình LFO
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(soundSettings.lfoFrequency, audioContext.currentTime);
+      lfoGain.gain.setValueAtTime(soundSettings.lfoGain, audioContext.currentTime);
+
+      // Cấu hình Delay
+      delay.delayTime.setValueAtTime(soundSettings.delayTime, audioContext.currentTime);
+      delayGain.gain.setValueAtTime(soundSettings.delayFeedback, audioContext.currentTime);
+
+      // Cấu hình Reverb
+      const reverbBuffer = audioContext.createBuffer(2, audioContext.sampleRate * soundSettings.reverbTime, audioContext.sampleRate);
+      for (let channel = 0; channel < 2; channel++) {
+        const channelData = reverbBuffer.getChannelData(channel);
+        for (let i = 0; i < reverbBuffer.length; i++) {
+          channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / reverbBuffer.length, 2);
+        }
+      }
+      reverb.buffer = reverbBuffer;
+
+      // Cấu hình Distortion
+      const makeDistortionCurve = (amount) => {
+        const samples = 44100;
+        const curve = new Float32Array(samples);
+        for (let i = 0; i < samples; i++) {
+          const x = (i * 2) / samples - 1;
+          curve[i] = (Math.PI + amount) * x / (Math.PI + amount * Math.abs(x));
+        }
+        return curve;
+      };
+      distortion.curve = makeDistortionCurve(soundSettings.distortionAmount);
+
+      // Cấu hình Compressor
+      compressor.threshold.setValueAtTime(soundSettings.compressorThreshold, audioContext.currentTime);
+      compressor.ratio.setValueAtTime(soundSettings.compressorRatio, audioContext.currentTime);
+      compressor.knee.setValueAtTime(30, audioContext.currentTime);
+      compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
+      compressor.release.setValueAtTime(0.25, audioContext.currentTime);
+
+      // Kết nối các node
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.frequency);
+      oscillator.connect(filter);
+      filter.connect(distortion);
+      distortion.connect(delay);
+      delay.connect(delayGain);
+      delayGain.connect(delay);
+      delay.connect(reverb);
+      distortion.connect(reverb);
+      reverb.connect(compressor);
+      compressor.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
+      // Cấu hình oscillator
       oscillator.type = 'sine';
       oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(soundSettings.volume, audioContext.currentTime);
 
+      // Bắt đầu và dừng
+      lfo.start();
       oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.2);
+      oscillator.stop(audioContext.currentTime + soundSettings.duration);
+      lfo.stop(audioContext.currentTime + soundSettings.duration);
     } catch (error) {
       console.log('Lỗi khi phát âm thanh:', error);
     }
+  };
+
+  // Thêm hàm test âm thanh
+  const testSound = () => {
+    playNotificationSound();
+  };
+
+  // Thêm hàm cập nhật settings
+  const handleSoundSettingChange = (setting, value) => {
+    setSoundSettings(prev => ({
+      ...prev,
+      [setting]: value
+    }));
   };
 
   // Thêm event listener cho tương tác người dùng
@@ -262,25 +364,29 @@ const Navbar = () => {
     }
   }, [notifications, hasInteracted]);
 
+  // Sửa lại useEffect cho ticker animation
   useEffect(() => {
-    if (!isHovered) {
-      controls.start({
-        x: [currentX, -1000],
-        transition: {
-          x: {
-            duration: tickerSpeed,
-            ease: "linear",
-            repeat: Infinity,
-            repeatType: "loop",
-            repeatDelay: 0
-          }
+    // Bắt đầu animation ngay khi component mount
+    controls.start({
+      x: [0, -1000],
+      transition: {
+        x: {
+          duration: tickerSpeed,
+          ease: "linear",
+          repeat: Infinity,
+          repeatType: "loop",
+          repeatDelay: 0
         }
-      })
-    } else {
+      }
+    })
+
+    // Cleanup function
+    return () => {
       controls.stop()
     }
-  }, [isHovered, tickerSpeed, currentX, controls])
+  }, [tickerSpeed, controls])
 
+  // Sửa lại handleMouseEnter
   const handleMouseEnter = () => {
     if (tickerRef.current) {
       const transform = getComputedStyle(tickerRef.current).transform
@@ -291,10 +397,25 @@ const Navbar = () => {
       }
     }
     setIsHovered(true)
+    controls.stop() // Dừng animation khi hover
   }
 
+  // Sửa lại handleMouseLeave
   const handleMouseLeave = () => {
     setIsHovered(false)
+    // Tiếp tục animation từ vị trí hiện tại
+    controls.start({
+      x: [currentX, -1000],
+      transition: {
+        x: {
+          duration: tickerSpeed,
+          ease: "linear",
+          repeat: Infinity,
+          repeatType: "loop",
+          repeatDelay: 0
+        }
+      }
+    })
   }
 
   // Filter notifications based on search and filters
@@ -407,6 +528,34 @@ const Navbar = () => {
     }
   }
 
+  // Thêm style cho ticker animation
+  const tickerStyle = {
+    animation: `ticker ${tickerSpeed}s linear infinite`,
+    animationPlayState: isHovered ? 'paused' : 'running'
+  }
+
+  // Thêm keyframes animation vào style
+  const styleSheet = document.createElement('style')
+  styleSheet.textContent = `
+    @keyframes ticker {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+  `
+  document.head.appendChild(styleSheet)
+
+  // Cleanup style khi component unmount
+  useEffect(() => {
+    return () => {
+      document.head.removeChild(styleSheet)
+    }
+  }, [])
+
+  // Sửa lại phần render của ticker
   return (
     <>
       <nav className="bg-white/95 backdrop-blur-lg shadow-lg border-b border-gray-100/50 sticky top-0 z-50">
@@ -433,7 +582,7 @@ const Navbar = () => {
                   transition={{ duration: 0.5 }}
                   className="bg-gradient-to-br from-emerald-500 to-blue-600 p-2.5 rounded-2xl shadow-lg group-hover:shadow-xl transition-all duration-300"
                 >
-                  <HomeIcon className="h-6 w-6 text-white" />
+                  <WalletIcon className="h-6 w-6 text-white" />
                 </motion.div>
                 <div className="hidden sm:block">
                   <motion.span 
@@ -492,7 +641,7 @@ const Navbar = () => {
                             : "bg-gray-100 group-hover:bg-emerald-100"
                         }`}
                     >
-                      <ChartBarIcon className="h-5 w-5" />
+                      <CurrencyDollarIcon className="h-5 w-5" />
                       </motion.div>
                       <span className="font-medium">Tài chính</span>
                       <motion.div 
@@ -660,7 +809,7 @@ const Navbar = () => {
                           : "bg-gray-100 group-hover:bg-emerald-100"
                     }`}
                   >
-                    <ChartBarIcon className="h-5 w-5" />
+                    <ArrowTrendingUpIcon className="h-5 w-5" />
                     </motion.div>
                     <span className="font-medium">Đầu tư</span>
                   </Link>
@@ -682,7 +831,7 @@ const Navbar = () => {
                           : "bg-gray-100 group-hover:bg-emerald-100"
                     }`}
                   >
-                    <ChartBarIcon className="h-5 w-5" />
+                    <ChartPieIcon className="h-5 w-5" />
                     </motion.div>
                     <span className="font-medium">Báo cáo</span>
                   </Link>
@@ -908,7 +1057,303 @@ const Navbar = () => {
                                 </div>
                               </motion.div>
                             )}
+
+                            {/* Thêm nút cài đặt âm thanh */}
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setShowSoundSettings(!showSoundSettings)}
+                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors duration-200"
+                            >
+                              <Cog6ToothIcon className="h-5 w-5" />
+                            </motion.button>
                           </div>
+
+                          {/* Form cài đặt âm thanh */}
+                          <AnimatePresence>
+                            {showSoundSettings && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="p-4 border-b border-gray-100 bg-gray-50">
+                                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Cài đặt âm thanh thông báo</h3>
+                                  
+                                  <div className="max-h-[300px] overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+                                    {/* Filter Frequency */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Tần số lọc</span>
+                                        <span className="text-sm text-gray-500">Cutoff Frequency</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="100"
+                                          max="2000"
+                                          step="100"
+                                          value={soundSettings.filterFrequency}
+                                          onChange={(e) => handleSoundSettingChange('filterFrequency', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.filterFrequency}Hz</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Filter Q */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Độ sắc lọc</span>
+                                        <span className="text-sm text-gray-500">Resonance/Q-Factor</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="1"
+                                          max="20"
+                                          step="1"
+                                          value={soundSettings.filterQ}
+                                          onChange={(e) => handleSoundSettingChange('filterQ', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.filterQ}</span>
+                                      </div>
+                                    </div>
+
+                                    {/* LFO Frequency */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Tốc độ điều chế</span>
+                                        <span className="text-sm text-gray-500">Modulation Rate</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="1"
+                                          max="10"
+                                          step="0.5"
+                                          value={soundSettings.lfoFrequency}
+                                          onChange={(e) => handleSoundSettingChange('lfoFrequency', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.lfoFrequency}Hz</span>
+                                      </div>
+                                    </div>
+
+                                    {/* LFO Gain */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Độ sâu điều chế</span>
+                                        <span className="text-sm text-gray-500">Modulation Depth</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="10"
+                                          max="100"
+                                          step="5"
+                                          value={soundSettings.lfoGain}
+                                          onChange={(e) => handleSoundSettingChange('lfoGain', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.lfoGain}Hz</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Volume */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Âm lượng</span>
+                                        <span className="text-sm text-gray-500">Gain/Amplitude</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="0"
+                                          max="1"
+                                          step="0.1"
+                                          value={soundSettings.volume}
+                                          onChange={(e) => handleSoundSettingChange('volume', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{Math.round(soundSettings.volume * 100)}%</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Duration */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Thời lượng</span>
+                                        <span className="text-sm text-gray-500">Envelope Duration</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="0.1"
+                                          max="1"
+                                          step="0.1"
+                                          value={soundSettings.duration}
+                                          onChange={(e) => handleSoundSettingChange('duration', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.duration}s</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Delay Controls */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Độ trễ</span>
+                                        <span className="text-sm text-gray-500">Delay Time</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="0"
+                                          max="1"
+                                          step="0.1"
+                                          value={soundSettings.delayTime}
+                                          onChange={(e) => handleSoundSettingChange('delayTime', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.delayTime}s</span>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Phản hồi trễ</span>
+                                        <span className="text-sm text-gray-500">Delay Feedback</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="0"
+                                          max="0.9"
+                                          step="0.1"
+                                          value={soundSettings.delayFeedback}
+                                          onChange={(e) => handleSoundSettingChange('delayFeedback', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{Math.round(soundSettings.delayFeedback * 100)}%</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Reverb Control */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Độ vang</span>
+                                        <span className="text-sm text-gray-500">Reverb Time</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="0.1"
+                                          max="5"
+                                          step="0.1"
+                                          value={soundSettings.reverbTime}
+                                          onChange={(e) => handleSoundSettingChange('reverbTime', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.reverbTime}s</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Distortion Control */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Độ méo</span>
+                                        <span className="text-sm text-gray-500">Distortion</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="0"
+                                          max="100"
+                                          step="1"
+                                          value={soundSettings.distortionAmount}
+                                          onChange={(e) => handleSoundSettingChange('distortionAmount', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.distortionAmount}%</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Compressor Controls */}
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Ngưỡng nén</span>
+                                        <span className="text-sm text-gray-500">Compressor Threshold</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="-60"
+                                          max="0"
+                                          step="1"
+                                          value={soundSettings.compressorThreshold}
+                                          onChange={(e) => handleSoundSettingChange('compressorThreshold', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.compressorThreshold}dB</span>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-sm font-medium text-gray-700">Tỷ lệ nén</span>
+                                        <span className="text-sm text-gray-500">Compressor Ratio</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <input
+                                          type="range"
+                                          min="1"
+                                          max="20"
+                                          step="1"
+                                          value={soundSettings.compressorRatio}
+                                          onChange={(e) => handleSoundSettingChange('compressorRatio', Number(e.target.value))}
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.compressorRatio}:1</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Test Button - Fixed at bottom */}
+                                  <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <motion.button
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                      onClick={testSound}
+                                      className="w-full px-4 py-2 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-xl hover:from-emerald-600 hover:to-blue-700 transition-all duration-300"
+                                    >
+                                      Thử âm thanh
+                                    </motion.button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* Add custom scrollbar styles */}
+                          <style jsx>{`
+                            .custom-scrollbar::-webkit-scrollbar {
+                              width: 6px;
+                            }
+                            .custom-scrollbar::-webkit-scrollbar-track {
+                              background: #f1f1f1;
+                              border-radius: 3px;
+                            }
+                            .custom-scrollbar::-webkit-scrollbar-thumb {
+                              background: #888;
+                              border-radius: 3px;
+                            }
+                            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                              background: #555;
+                            }
+                          `}</style>
 
                           {/* Notifications List */}
                           <div className="max-h-[calc(80vh-200px)] overflow-y-auto">
@@ -1338,7 +1783,7 @@ const Navbar = () => {
                       }`}
                       onClick={() => setShowMenu(false)}
                     >
-                      <ChartBarIcon className="h-5 w-5" />
+                      <ArrowTrendingUpIcon className="h-5 w-5" />
                       <span className="font-medium">Đầu tư</span>
                     </Link>
 
@@ -1351,7 +1796,7 @@ const Navbar = () => {
                       }`}
                       onClick={() => setShowMenu(false)}
                     >
-                      <ChartBarIcon className="h-5 w-5" />
+                      <ClipboardDocumentListIcon className="h-5 w-5" />
                       <span className="font-medium">Báo cáo</span>
                     </Link>
 
@@ -1525,19 +1970,18 @@ const Navbar = () => {
                 </div>
                 <div 
                   className="relative flex-1 overflow-hidden"
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
                 >
-                  <motion.div
+                  <div 
                     ref={tickerRef}
-                    animate={controls}
-                    className="flex space-x-8 whitespace-nowrap ticker-content"
+                    style={tickerStyle}
+                    className="flex space-x-8 whitespace-nowrap"
                   >
                     {/* First set of notifications */}
-                    {notifications.map((notif, index) => (
-                      <motion.div
+                    {notifications.map((notif) => (
+                      <div
                         key={`first-${notif._id}`}
-                        whileHover={{ scale: 1.02, backgroundColor: "rgba(16, 185, 129, 0.05)" }}
                         className="inline-flex items-center space-x-2 text-sm text-gray-600 px-2 py-1 rounded-lg transition-all duration-200"
                       >
                         <span className="font-medium">{notif.noiDung}</span>
@@ -1546,21 +1990,19 @@ const Navbar = () => {
                           {new Date(notif.ngay).toLocaleString()}
                         </span>
                         {!notif.daDoc && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
+                          <button
                             onClick={() => handleMarkAsRead(notif._id)}
                             className={`text-${tickerColor}-600 hover:underline text-xs font-medium`}
                           >
                             Đánh dấu đã đọc
-                          </motion.button>
+                          </button>
                         )}
-                      </motion.div>
+                      </div>
                     ))}
                     {/* Duplicate set for seamless loop */}
-                    {notifications.map((notif, index) => (
-                      <motion.div
+                    {notifications.map((notif) => (
+                      <div
                         key={`second-${notif._id}`}
-                        whileHover={{ scale: 1.02, backgroundColor: "rgba(16, 185, 129, 0.05)" }}
                         className="inline-flex items-center space-x-2 text-sm text-gray-600 px-2 py-1 rounded-lg transition-all duration-200"
                       >
                         <span className="font-medium">{notif.noiDung}</span>
@@ -1569,17 +2011,16 @@ const Navbar = () => {
                           {new Date(notif.ngay).toLocaleString()}
                         </span>
                         {!notif.daDoc && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
+                          <button
                             onClick={() => handleMarkAsRead(notif._id)}
                             className={`text-${tickerColor}-600 hover:underline text-xs font-medium`}
                           >
                             Đánh dấu đã đọc
-                          </motion.button>
+                          </button>
                         )}
-                      </motion.div>
+                      </div>
                     ))}
-                  </motion.div>
+                  </div>
                 </div>
               </div>
             </div>

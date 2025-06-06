@@ -610,7 +610,7 @@ const TransactionList = ({ transactions, setTransactions, loading, onEdit, onDel
               categories={categories}
               onReset={handleResetFilters}
             />
-    </div>
+          </div>
 
           <div className="flex items-center space-x-2">
             {/* Refresh Button */}
@@ -658,7 +658,7 @@ const TransactionList = ({ transactions, setTransactions, loading, onEdit, onDel
                   <div className="p-1">
                     <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Xuất dữ liệu
-      </div>
+                    </div>
                     <Menu.Item>
                       {({ active }) => (
                         <motion.button
@@ -671,11 +671,11 @@ const TransactionList = ({ transactions, setTransactions, loading, onEdit, onDel
                         >
                           <div className="mr-3 h-8 w-8 flex items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 group-hover:bg-emerald-200 transition-colors duration-200">
                             <DocumentArrowDownIcon className="h-5 w-5" />
-        </div>
+                          </div>
                           <div className="flex flex-col items-start">
                             <span className="font-medium">Xuất Excel</span>
                             <span className="text-xs text-gray-500">Định dạng .xlsx</span>
-      </div>
+                          </div>
                         </motion.button>
                       )}
                     </Menu.Item>
@@ -1190,6 +1190,12 @@ const Dashboard = () => {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const navigate = useNavigate()
 
+  // Animation variants
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  }
+
   // Sanitize userId
   const userId = localStorage.getItem("userId")?.replace(/[^\w-]/g, "")
 
@@ -1460,21 +1466,31 @@ const Dashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8"
+          className="text-center mb-8"
         >
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-              ViSmart Board
-            </h1>
-          <p className="text-gray-500 mt-2">Quản lý tài chính của bạn một cách thông minh</p>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setIsFormOpen(true)}
-            className="mt-4 md:mt-0 px-6 py-3 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2"
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg"
           >
-            <PlusIcon className="h-5 w-5" />
+            <DocumentTextIcon className="w-10 h-10 text-white" />
+          </motion.div>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            Giao Dịch
+          </h2>
+          <p className="text-gray-600 font-medium">Quản lý tài chính của bạn một cách thông minh</p>
+        </motion.div>
+
+        {/* Add Transaction Button */}
+        <motion.div variants={itemVariants} className="flex justify-end mb-6">
+          <motion.button
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsFormOpen(true)}
+            className="bg-gradient-to-r from-emerald-500 to-blue-600 text-white px-6 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-3 font-semibold"
+          >
+            <PlusIcon className="w-5 h-5" />
             <span>Thêm Giao Dịch</span>
           </motion.button>
         </motion.div>

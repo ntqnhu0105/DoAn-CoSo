@@ -7,6 +7,7 @@ import {
   PlusIcon, 
   PencilIcon,
   TrashIcon,
+  BanknotesIcon,
   ChartBarIcon,
   CalendarIcon,
   InformationCircleIcon,
@@ -16,11 +17,15 @@ import {
   MagnifyingGlassIcon,
   ArrowUpIcon,
   ArrowDownIcon,
+  ArrowTrendingUpIcon,
   ShareIcon,
   BellIcon,
   ChartPieIcon,
-  ChartLineIcon,
-  BanknotesIcon
+  ExclamationCircleIcon,
+  XMarkIcon,
+  DocumentTextIcon,
+  PresentationChartLineIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 import { Line, Pie } from 'react-chartjs-2';
 import {
@@ -510,29 +515,25 @@ const Investments = () => {
         }}
       />
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800">Quản lý đầu tư</h2>
-          <div className="flex space-x-4">
-            <motion.button
-              onClick={() => setShowStats(!showStats)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200 flex items-center space-x-2"
-            >
-              <ChartPieIcon className="h-5 w-5" />
-              <span>Thống kê</span>
-            </motion.button>
-            <motion.button
-              onClick={openAddModal}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center space-x-2"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span>Thêm đầu tư</span>
-            </motion.button>
-          </div>
-        </div>
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg"
+          >
+            <ArrowTrendingUpIcon className="w-10 h-10 text-white" />
+          </motion.div>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            Đầu Tư
+          </h2>
+          <p className="text-gray-600 font-medium">Theo dõi và quản lý các khoản đầu tư của bạn</p>
+        </motion.div>
 
         {/* Tổng quan */}
         <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
@@ -548,72 +549,38 @@ const Investments = () => {
               <p className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {totalProfit.toLocaleString()} VNĐ
               </p>
-              </div>
+            </div>
             <div className="bg-purple-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-700 mb-2">Tỷ suất lợi nhuận</h3>
               <p className={`text-2xl font-bold ${averageROI >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
                 {averageROI.toFixed(1)}%
               </p>
-        </div>
+            </div>
           </div>
         </motion.div>
 
-        {/* Thống kê */}
-        {showStats && (
-          <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h3 className="text-xl font-semibold mb-4">Thống kê</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-lg font-medium mb-2">Phân bố trạng thái</h4>
-                <div className="h-64">
-                  <Pie data={chartData} options={{ maintainAspectRatio: false }} />
-                </div>
-              </div>
-              <div>
-                <h4 className="text-lg font-medium mb-2">Lợi nhuận theo loại đầu tư</h4>
-                    <div className="h-64">
-                      <Line
-                    data={profitData} 
-                        options={{
-                          maintainAspectRatio: false,
-                          scales: {
-                            y: {
-                          title: { display: true, text: 'Lợi nhuận (VNĐ)' }
-                            },
-                            x: {
-                          title: { display: true, text: 'Loại đầu tư' }
-                        }
-                      }
-                        }}
-                      />
-                    </div>
-                    </div>
-              </div>
-          </motion.div>
-        )}
-
         {/* Bộ lọc và tìm kiếm */}
-        <motion.div variants={itemVariants} className="bg-white p-4 rounded-lg shadow-md mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="flex items-center space-x-4">
-              <label className="text-gray-700 font-medium">Lọc trạng thái:</label>
+              <label className="text-gray-700 font-medium whitespace-nowrap">Lọc:</label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               >
                 <option value="Tất cả">Tất cả</option>
                 <option value="Hoạt động">Hoạt động</option>
                 <option value="Đã bán">Đã bán</option>
                 <option value="Đang chờ">Đang chờ</option>
               </select>
-                        </div>
+            </div>
             <div className="flex items-center space-x-4">
-              <label className="text-gray-700 font-medium">Sắp xếp theo:</label>
+              <label className="text-gray-700 font-medium whitespace-nowrap">Sắp xếp:</label>
               <select
                 value={sortConfig.key}
                 onChange={(e) => handleSort(e.target.value)}
-                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               >
                 <option value="ngay">Ngày đầu tư</option>
                 <option value="giaTri">Giá trị</option>
@@ -631,7 +598,7 @@ const Investments = () => {
                   <ArrowDownIcon className="h-5 w-5" />
                 )}
               </motion.button>
-                        </div>
+            </div>
             <div className="relative">
               <input
                 type="text"
@@ -641,9 +608,158 @@ const Investments = () => {
                 className="w-full p-2 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                      </div>
-                  </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <motion.button
+                onClick={() => setShowStats(!showStats)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gray-50 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition duration-200 flex items-center space-x-2 border border-gray-200 flex-1"
+              >
+                <ChartPieIcon className="h-5 w-5" />
+                <span>{showStats ? 'Ẩn Thống kê' : 'Thống kê'}</span>
+              </motion.button>
+              <motion.button
+                onClick={openAddModal}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center space-x-2 flex-1"
+              >
+                <ArrowTrendingUpIcon className="h-5 w-5" />
+                <span>Đầu tư</span>
+              </motion.button>
+            </div>
+          </div>
         </motion.div>
+
+        {/* Bảng thống kê */}
+        <AnimatePresence>
+          {showStats && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Biểu đồ tròn */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                    <ChartPieIcon className="h-5 w-5 text-indigo-600" />
+                    <span>Phân bố trạng thái</span>
+                  </h3>
+                  <div className="h-64">
+                    <Pie
+                      data={chartData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                            labels: {
+                              padding: 20,
+                              font: {
+                                size: 12
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Biểu đồ đường */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                    <PresentationChartLineIcon className="h-5 w-5 text-blue-600" />
+                    <span>Lợi nhuận theo loại đầu tư</span>
+                  </h3>
+                  <div className="h-64">
+                    <Line
+                      data={profitData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            display: false
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            ticks: {
+                              callback: function(value) {
+                                return value.toLocaleString() + ' VNĐ';
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Thống kê chi tiết */}
+                <div className="md:col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-blue-800 mb-1">Tổng số đầu tư</h4>
+                      <p className="text-2xl font-bold text-blue-600">{investments.length}</p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-blue-600">Hoạt động:</span>
+                        <span className="text-sm font-medium text-blue-800">
+                          {investments.filter(inv => inv.trangThai === 'Hoạt động').length}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-green-800 mb-1">Đã bán</h4>
+                      <p className="text-2xl font-bold text-green-600">
+                        {investments.filter(inv => inv.trangThai === 'Đã bán').length}
+                      </p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-green-600">Tỷ lệ:</span>
+                        <span className="text-sm font-medium text-green-800">
+                          {investments.length ? ((investments.filter(inv => inv.trangThai === 'Đã bán').length / investments.length) * 100).toFixed(1) : 0}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-yellow-800 mb-1">Đang chờ</h4>
+                      <p className="text-2xl font-bold text-yellow-600">
+                        {investments.filter(inv => inv.trangThai === 'Đang chờ').length}
+                      </p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-yellow-600">Tỷ lệ:</span>
+                        <span className="text-sm font-medium text-yellow-800">
+                          {investments.length ? ((investments.filter(inv => inv.trangThai === 'Đang chờ').length / investments.length) * 100).toFixed(1) : 0}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-purple-800 mb-1">Tỷ suất lợi nhuận</h4>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {averageROI.toFixed(1)}%
+                      </p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-purple-600">Tổng lợi nhuận:</span>
+                        <span className="text-sm font-medium text-purple-800">
+                          {totalProfit.toLocaleString()} VNĐ
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Danh sách đầu tư */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -657,7 +773,7 @@ const Investments = () => {
             ))
           ) : filteredAndSortedInvestments.length === 0 ? (
             <div className="col-span-full bg-white rounded-lg shadow-md p-8 text-center">
-              <BanknotesIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <ArrowTrendingUpIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Chưa có đầu tư nào</h3>
               <p className="text-gray-500">Hãy thêm đầu tư đầu tiên của bạn</p>
             </div>
@@ -695,7 +811,7 @@ const Investments = () => {
                     <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500">Giá trị:</span>
-                      <span className="font-semibold text-gray-800">
+                      <span className="font-semibold text-blue-800">
                         {investment.giaTri.toLocaleString()} VNĐ
                         </span>
                       </div>
@@ -783,133 +899,191 @@ const Investments = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           >
             <motion.div
-              initial={{ scale: 0.8, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 50 }}
-              className="bg-white rounded-lg p-6 w-full max-w-lg"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             >
-              <h3 className="text-xl font-semibold mb-4">
-                {editId ? 'Sửa đầu tư' : 'Thêm đầu tư'}
-              </h3>
-              {error && <p className="text-red-500 mb-4">{error}</p>}
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">
-                    Loại đầu tư
-                    <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Loại đầu tư của bạn" />
-                  </label>
-                  <input
-                    type="text"
-                    value={loai}
-                    onChange={(e) => setLoai(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                    placeholder="Ví dụ: Cổ phiếu, Trái phiếu"
-                    maxLength={50}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-1">
-                      Giá trị
-                      <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Giá trị đầu tư của bạn" />
-                    </label>
-                    <input
-                    type="number"
-                    value={giaTri}
-                    onChange={(e) => setGiaTri(e.target.value)}
-                      className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    step="0.01"
-                    min="0.01"
-                      placeholder="Giá trị đầu tư"
-                  />
-              </div>
-
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-1">
-                      Lợi nhuận
-                      <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Lợi nhuận từ đầu tư (có thể âm)" />
-                    </label>
-                    <input
-                    type="number"
-                    value={loiNhuan}
-                    onChange={(e) => setLoiNhuan(e.target.value)}
-                      className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    step="0.01"
-                      placeholder="Lợi nhuận"
-                  />
-                </div>
-              </div>
-
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">
-                    Ngày đầu tư
-                    <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Ngày bạn thực hiện đầu tư" />
-                  </label>
-                  <input
-                    type="date"
-                    value={ngay}
-                    onChange={(e) => setNgay(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-              </div>
-
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">
-                    Ghi chú
-                    <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Thông tin bổ sung về đầu tư" />
-                  </label>
-                  <textarea
-                  value={ghiChu}
-                  onChange={(e) => setGhiChu(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ghi chú (tối đa 200 ký tự)"
-                    rows="3"
-                  maxLength={200}
-                />
-              </div>
-
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">
-                    Trạng thái
-                    <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Trạng thái hiện tại của đầu tư" />
-                  </label>
-                  <select
-                    value={trangThai}
-                    onChange={(e) => setTrangThai(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="Hoạt động">Hoạt động</option>
-                    <option value="Đã bán">Đã bán</option>
-                    <option value="Đang chờ">Đang chờ</option>
-                  </select>
-                </div>
-
-                <div className="flex space-x-4">
+              <div className="p-6 border-b border-gray-100/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl">
+                      <ArrowTrendingUpIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {editId ? "Sửa Đầu Tư" : "Thêm Đầu Tư"}
+                    </h3>
+                  </div>
                   <motion.button
-                  type="submit"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-200"
+                    onClick={closeModal}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-all duration-200"
                   >
-                    {editId ? 'Cập nhật' : 'Thêm đầu tư'}
+                    <XMarkIcon className="w-6 h-6" />
                   </motion.button>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="p-4 bg-red-50/80 backdrop-blur-sm text-red-700 rounded-2xl border border-red-200/50 flex items-center space-x-3"
+                    >
+                      <ExclamationCircleIcon className="w-5 h-5 text-red-600" />
+                      <span className="font-medium">{error}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Loại đầu tư */}
+                  <div className="md:col-span-2">
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <TagIcon className="h-4 w-4 text-emerald-600" />
+                      <span>Loại Đầu Tư</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={loai}
+                        onChange={(e) => setLoai(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-emerald-500/20 focus:shadow-lg transition-all duration-300"
+                        required
+                        placeholder="Ví dụ: Cổ phiếu, Trái phiếu"
+                        maxLength={50}
+                      />
+                      <TagIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-emerald-500" />
+                    </div>
+                  </div>
+
+                  {/* Giá trị */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <BanknotesIcon className="h-4 w-4 text-blue-600" />
+                      <span>Giá Trị</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={giaTri}
+                        onChange={(e) => setGiaTri(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-blue-500/20 focus:shadow-lg transition-all duration-300"
+                        required
+                        step="0.01"
+                        min="0.01"
+                        placeholder="Giá trị đầu tư"
+                      />
+                      <BanknotesIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-500" />
+                    </div>
+                  </div>
+
+                  {/* Lợi nhuận */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <ArrowTrendingUpIcon className="h-4 w-4 text-purple-600" />
+                      <span>Lợi Nhuận</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={loiNhuan}
+                        onChange={(e) => setLoiNhuan(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-purple-500/20 focus:shadow-lg transition-all duration-300"
+                        step="0.01"
+                        placeholder="Lợi nhuận"
+                      />
+                      <ArrowTrendingUpIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-500" />
+                    </div>
+                  </div>
+
+                  {/* Ngày đầu tư */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <CalendarIcon className="h-4 w-4 text-indigo-600" />
+                      <span>Ngày Đầu Tư</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        value={ngay}
+                        onChange={(e) => setNgay(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-indigo-500/20 focus:shadow-lg transition-all duration-300"
+                      />
+                      <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-indigo-500" />
+                    </div>
+                  </div>
+
+                  {/* Trạng thái */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <CheckCircleIcon className="h-4 w-4 text-pink-600" />
+                      <span>Trạng Thái</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={trangThai}
+                        onChange={(e) => setTrangThai(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-pink-500/20 focus:shadow-lg transition-all duration-300 appearance-none"
+                      >
+                        <option value="Hoạt động">Hoạt động</option>
+                        <option value="Đã bán">Đã bán</option>
+                        <option value="Đang chờ">Đang chờ</option>
+                      </select>
+                      <CheckCircleIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-pink-500" />
+                    </div>
+                  </div>
+
+                  {/* Ghi chú */}
+                  <div className="md:col-span-2">
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <DocumentTextIcon className="h-4 w-4 text-gray-600" />
+                      <span>Ghi Chú</span>
+                    </label>
+                    <div className="relative">
+                      <textarea
+                        value={ghiChu}
+                        onChange={(e) => setGhiChu(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-gray-500/20 focus:shadow-lg transition-all duration-300 min-h-[100px] resize-none"
+                        placeholder="Nhập ghi chú (tối đa 200 ký tự)"
+                        maxLength={200}
+                      />
+                      <DocumentTextIcon className="absolute left-4 top-4 h-5 w-5 text-gray-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex space-x-4 pt-4">
                   <motion.button
                     type="button"
                     onClick={closeModal}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition duration-200"
+                    className="flex-1 px-6 py-4 bg-gray-200/80 backdrop-blur-sm text-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:bg-gray-300/80"
                   >
-                    Hủy
+                    <XMarkIcon className="w-5 h-5" />
+                    <span>Hủy</span>
+                  </motion.button>
+
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-6 py-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:from-emerald-600 hover:to-blue-700"
+                  >
+                    <ArrowTrendingUpIcon className="w-5 h-5" />
+                    <span>{editId ? "Cập Nhật" : "Thêm"} Đầu Tư</span>
                   </motion.button>
                 </div>
-            </form>
+              </form>
             </motion.div>
           </motion.div>
         )}
@@ -922,51 +1096,25 @@ const Investments = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           >
             <motion.div
-              initial={{ scale: 0.8, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.8, y: 50 }}
-              className="bg-white rounded-lg p-6 w-full max-w-md"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 w-full max-w-lg max-h-[90vh] overflow-y-auto"
             >
-              <h3 className="text-xl font-semibold mb-4">Thêm nhắc nhở</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">
-                    Ngày nhắc nhở
-                    <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Ngày bạn muốn được nhắc nhở" />
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={reminderDate}
-                    onChange={(e) => setReminderDate(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-      </div>
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">
-                    Ghi chú nhắc nhở
-                    <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Nội dung nhắc nhở" />
-                  </label>
-                  <textarea
-                    value={reminderNote}
-                    onChange={(e) => setReminderNote(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nhập nội dung nhắc nhở..."
-                    rows="3"
-                  />
-    </div>
-                <div className="flex space-x-4">
-                  <motion.button
-                    onClick={handleAddReminder}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-200"
-                  >
-                    Thêm nhắc nhở
-                  </motion.button>
+              <div className="p-6 border-b border-gray-100/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl">
+                      <BellIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Thêm Nhắc Nhở
+                    </h3>
+                  </div>
                   <motion.button
                     onClick={() => {
                       setShowReminderModal(false);
@@ -974,14 +1122,82 @@ const Investments = () => {
                       setReminderNote('');
                       setSelectedInvestment(null);
                     }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition duration-200"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-all duration-200"
                   >
-                    Hủy
+                    <XMarkIcon className="w-6 h-6" />
                   </motion.button>
                 </div>
               </div>
+
+              <form onSubmit={handleAddReminder} className="p-6 space-y-6">
+                <div className="space-y-6">
+                  {/* Ngày nhắc nhở */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <CalendarIcon className="h-4 w-4 text-indigo-600" />
+                      <span>Ngày Nhắc Nhở</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="datetime-local"
+                        value={reminderDate}
+                        onChange={(e) => setReminderDate(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-indigo-500/20 focus:shadow-lg transition-all duration-300"
+                        required
+                      />
+                      <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-indigo-500" />
+                    </div>
+                  </div>
+
+                  {/* Ghi chú nhắc nhở */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <DocumentTextIcon className="h-4 w-4 text-gray-600" />
+                      <span>Ghi Chú Nhắc Nhở</span>
+                    </label>
+                    <div className="relative">
+                      <textarea
+                        value={reminderNote}
+                        onChange={(e) => setReminderNote(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-gray-500/20 focus:shadow-lg transition-all duration-300 min-h-[100px] resize-none"
+                        placeholder="Nhập nội dung nhắc nhở..."
+                        rows="3"
+                      />
+                      <DocumentTextIcon className="absolute left-4 top-4 h-5 w-5 text-gray-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex space-x-4 pt-4">
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      setShowReminderModal(false);
+                      setReminderDate('');
+                      setReminderNote('');
+                      setSelectedInvestment(null);
+                    }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-6 py-4 bg-gray-200/80 backdrop-blur-sm text-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:bg-gray-300/80"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                    <span>Hủy</span>
+                  </motion.button>
+
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-6 py-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:from-emerald-600 hover:to-blue-700"
+                  >
+                    <BellIcon className="w-5 h-5" />
+                    <span>Thêm Nhắc Nhở</span>
+                  </motion.button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}

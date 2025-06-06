@@ -7,6 +7,8 @@ import {
   PlusIcon, 
   PencilIcon, 
   TrashIcon, 
+  BanknotesIcon, 
+  ArchiveBoxIcon,
   ChartBarIcon,
   CalendarIcon,
   InformationCircleIcon,
@@ -19,7 +21,11 @@ import {
   ShareIcon,
   BellIcon,
   ChartPieIcon,
-  ChartLineIcon
+  ExclamationCircleIcon,
+  XMarkIcon,
+  DocumentTextIcon,
+  PresentationChartLineIcon,
+  TagIcon
 } from '@heroicons/react/24/outline';
 import { Line, Pie } from 'react-chartjs-2';
 import {
@@ -33,6 +39,7 @@ import {
   Legend,
   ArcElement
 } from 'chart.js';
+import { motion, AnimatePresence } from 'framer-motion';
 
 ChartJS.register(
   CategoryScale,
@@ -44,6 +51,25 @@ ChartJS.register(
   Legend,
   ArcElement
 );
+
+// Animation variants for Framer Motion
+const containerVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: 'easeOut',
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
 
 const SavingGoal = () => {
   const [savingGoals, setSavingGoals] = useState([]);
@@ -395,7 +421,12 @@ const SavingGoal = () => {
   const completionPercentage = totalTarget ? (totalSaved / totalTarget) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 p-6">
+    <motion.div 
+      className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 p-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -406,30 +437,36 @@ const SavingGoal = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        theme="light"
+        toastStyle={{
+          borderRadius: '16px',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+        }}
       />
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800">Quản lý mục tiêu tiết kiệm</h2>
-          <div className="flex space-x-4">
-            <button
-              onClick={() => setShowStats(!showStats)}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200 flex items-center space-x-2"
-            >
-              <ChartPieIcon className="h-5 w-5" />
-              <span>Thống kê</span>
-            </button>
-            <button
-              onClick={openAddModal}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center space-x-2"
-            >
-              <PlusIcon className="h-5 w-5" />
-              <span>Thêm mục tiêu</span>
-            </button>
-          </div>
-        </div>
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg"
+          >
+            <ArchiveBoxIcon className="w-10 h-10 text-white" />
+          </motion.div>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            Mục Tiêu Tiết Kiệm
+          </h2>
+          <p className="text-gray-600 font-medium">Theo dõi và quản lý các mục tiêu tiết kiệm của bạn</p>
+        </motion.div>
 
         {/* Tổng quan */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-700 mb-2">Tổng tiền đã tiết kiệm</h3>
@@ -446,79 +483,51 @@ const SavingGoal = () => {
             <div className="bg-purple-50 p-4 rounded-lg">
               <h3 className="text-lg font-semibold text-gray-700 mb-2">Tiến độ chung</h3>
               <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-                <div
-                  className="bg-purple-600 h-2.5 rounded-full"
-                  style={{ width: `${completionPercentage}%` }}
-                ></div>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${completionPercentage}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="bg-gradient-to-r from-emerald-500 to-blue-600 h-2.5 rounded-full"
+                ></motion.div>
               </div>
               <p className="text-lg font-semibold text-purple-600">
                 {completionPercentage.toFixed(1)}%
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Thống kê */}
-        {showStats && (
-          <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-            <h3 className="text-xl font-semibold mb-4">Thống kê</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-lg font-medium mb-2">Phân bố trạng thái</h4>
-                <div className="h-64">
-                  <Pie data={chartData} options={{ maintainAspectRatio: false }} />
-                </div>
-              </div>
-              <div>
-                <h4 className="text-lg font-medium mb-2">Tiến độ theo mục tiêu</h4>
-                <div className="h-64">
-                  <Line 
-                    data={progressData} 
-                    options={{ 
-                      maintainAspectRatio: false,
-                      scales: {
-                        y: {
-                          beginAtZero: true,
-                          max: 100
-                        }
-                      }
-                    }} 
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        </motion.div>
 
         {/* Bộ lọc và tìm kiếm */}
-        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="flex items-center space-x-4">
-              <label className="text-gray-700 font-medium">Lọc trạng thái:</label>
+              <label className="text-gray-700 font-medium whitespace-nowrap">Lọc:</label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               >
                 <option value="Tất cả">Tất cả</option>
-                <option value="Đang thực hiện">Đang thực hiện</option>
+                <option value="Đang tiết kiệm">Đang tiết kiệm</option>
                 <option value="Hoàn thành">Hoàn thành</option>
-                <option value="Thất bại">Thất bại</option>
+                <option value="Đã hủy">Đã hủy</option>
               </select>
             </div>
             <div className="flex items-center space-x-4">
-              <label className="text-gray-700 font-medium">Sắp xếp theo:</label>
+              <label className="text-gray-700 font-medium whitespace-nowrap">Sắp xếp:</label>
               <select
                 value={sortConfig.key}
                 onChange={(e) => handleSort(e.target.value)}
-                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               >
-                <option value="ngayTao">Ngày tạo</option>
-                <option value="soTienMucTieu">Số tiền mục tiêu</option>
-                <option value="hanChot">Hạn chót</option>
+                <option value="ngay">Ngày bắt đầu</option>
+                <option value="soTien">Số tiền</option>
+                <option value="tienTietKiem">Tiền tiết kiệm</option>
               </select>
-              <button
+              <motion.button
                 onClick={() => handleSort(sortConfig.key)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
               >
                 {sortConfig.direction === 'asc' ? (
@@ -526,7 +535,7 @@ const SavingGoal = () => {
                 ) : (
                   <ArrowDownIcon className="h-5 w-5" />
                 )}
-              </button>
+              </motion.button>
             </div>
             <div className="relative">
               <input
@@ -538,13 +547,162 @@ const SavingGoal = () => {
               />
               <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
             </div>
+            <div className="flex items-center space-x-4">
+              <motion.button
+                onClick={() => setShowStats(!showStats)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gray-50 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition duration-200 flex items-center space-x-2 border border-gray-200 flex-1"
+              >
+                <ChartPieIcon className="h-5 w-5" />
+                <span>{showStats ? 'Ẩn Thống kê' : 'Thống kê'}</span>
+              </motion.button>
+              <motion.button
+                onClick={openAddModal}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center space-x-2 flex-1"
+              >
+                <PlusIcon className="h-5 w-5" />
+                <span>Mục tiêu</span>
+              </motion.button>
+            </div>
           </div>
-        </div>
+        </motion.div>
+
+        {/* Bảng thống kê */}
+        <AnimatePresence>
+          {showStats && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Biểu đồ tròn */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                    <ChartPieIcon className="h-5 w-5 text-indigo-600" />
+                    <span>Phân bố trạng thái</span>
+                  </h3>
+                  <div className="h-64">
+                    <Pie
+                      data={chartData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                            labels: {
+                              padding: 20,
+                              font: {
+                                size: 12
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Biểu đồ đường */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                    <PresentationChartLineIcon className="h-5 w-5 text-blue-600" />
+                    <span>Tiến độ tiết kiệm</span>
+                  </h3>
+                  <div className="h-64">
+                    <Line
+                      data={progressData}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            display: false
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                              callback: function(value) {
+                                return value + '%';
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Thống kê chi tiết */}
+                <div className="md:col-span-2">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-blue-800 mb-1">Tổng số mục tiêu</h4>
+                      <p className="text-2xl font-bold text-blue-600">{savingGoals.length}</p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-blue-600">Đang tiết kiệm:</span>
+                        <span className="text-sm font-medium text-blue-800">
+                          {savingGoals.filter(goal => goal.trangThai === 'Đang tiết kiệm').length}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-green-800 mb-1">Hoàn thành</h4>
+                      <p className="text-2xl font-bold text-green-600">
+                        {savingGoals.filter(goal => goal.trangThai === 'Hoàn thành').length}
+                      </p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-green-600">Tỷ lệ:</span>
+                        <span className="text-sm font-medium text-green-800">
+                          {savingGoals.length ? ((savingGoals.filter(goal => goal.trangThai === 'Hoàn thành').length / savingGoals.length) * 100).toFixed(1) : 0}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-yellow-800 mb-1">Đã hủy</h4>
+                      <p className="text-2xl font-bold text-yellow-600">
+                        {savingGoals.filter(goal => goal.trangThai === 'Đã hủy').length}
+                      </p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-yellow-600">Tỷ lệ:</span>
+                        <span className="text-sm font-medium text-yellow-800">
+                          {savingGoals.length ? ((savingGoals.filter(goal => goal.trangThai === 'Đã hủy').length / savingGoals.length) * 100).toFixed(1) : 0}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
+                      <h4 className="text-sm font-medium text-purple-800 mb-1">Tổng tiền tiết kiệm</h4>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {totalSaved.toLocaleString()} VNĐ
+                      </p>
+                      <div className="mt-2 flex items-center space-x-2">
+                        <span className="text-sm text-purple-600">Tổng mục tiêu:</span>
+                        <span className="text-sm font-medium text-purple-800">
+                          {totalTarget.toLocaleString()} VNĐ
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Danh sách mục tiêu */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
-            // Loading skeletons
             Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="bg-white rounded-lg shadow-md p-6 animate-pulse">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
@@ -554,18 +712,19 @@ const SavingGoal = () => {
             ))
           ) : filteredAndSortedGoals.length === 0 ? (
             <div className="col-span-full bg-white rounded-lg shadow-md p-8 text-center">
-              <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <ArchiveBoxIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Chưa có mục tiêu nào</h3>
               <p className="text-gray-500">Hãy thêm mục tiêu tiết kiệm đầu tiên của bạn</p>
             </div>
           ) : (
-            filteredAndSortedGoals.map((goal, index) => {
+            filteredAndSortedGoals.map((goal) => {
               const progress = (goal.soTienHienTai / goal.soTienMucTieu) * 100;
               const daysRemaining = Math.ceil((new Date(goal.hanChot) - new Date()) / (1000 * 60 * 60 * 24));
 
               return (
-                <div
+                <motion.div
                   key={goal._id}
+                  variants={itemVariants}
                   draggable
                   onDragStart={() => handleDragStart(goal)}
                   onDragOver={(e) => handleDragOver(e, goal)}
@@ -592,14 +751,14 @@ const SavingGoal = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500">Số tiền mục tiêu:</span>
-                      <span className="font-semibold text-gray-800">
+                      <span className="font-semibold text-indigo-800">
                         {goal.soTienMucTieu.toLocaleString()} VNĐ
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500">Đã tiết kiệm:</span>
-                      <span className="font-semibold text-gray-800">
+                      <span className="font-semibold text-emerald-800">
                         {goal.soTienHienTai.toLocaleString()} VNĐ
                       </span>
                     </div>
@@ -627,18 +786,20 @@ const SavingGoal = () => {
 
                     <div className="mt-4">
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(progress, 100)}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
                           className={`h-2.5 rounded-full ${
                             progress >= 100
-                              ? 'bg-green-600'
+                              ? 'bg-gradient-to-r from-emerald-500 to-green-600'
                               : progress >= 75
-                              ? 'bg-blue-600'
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-600'
                               : progress >= 50
-                              ? 'bg-yellow-600'
-                              : 'bg-red-600'
+                              ? 'bg-gradient-to-r from-yellow-500 to-orange-600'
+                              : 'bg-gradient-to-r from-red-500 to-pink-600'
                           }`}
-                          style={{ width: `${Math.min(progress, 100)}%` }}
-                        ></div>
+                        ></motion.div>
                       </div>
                       <p className="text-xs text-gray-600 mt-1">
                         {progress.toFixed(1)}% hoàn thành
@@ -652,227 +813,367 @@ const SavingGoal = () => {
                     )}
 
                     <div className="flex justify-end space-x-2 mt-4">
-                      <button
+                      <motion.button
                         onClick={() => {
                           setSelectedGoal(goal);
                           setShowReminderModal(true);
                         }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
                         title="Thêm nhắc nhở"
                       >
                         <BellIcon className="h-5 w-5" />
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={() => handleShare(goal)}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
                         title="Chia sẻ mục tiêu"
                       >
                         <ShareIcon className="h-5 w-5" />
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={() => openEditModal(goal)}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                         title="Sửa mục tiêu"
                       >
                         <PencilIcon className="h-5 w-5" />
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={() => handleDelete(goal._id)}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                         title="Xóa mục tiêu"
                       >
                         <TrashIcon className="h-5 w-5" />
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* Modal thêm/sửa mục tiêu */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-            <h3 className="text-xl font-semibold mb-4">
-              {editId ? 'Sửa mục tiêu tiết kiệm' : 'Thêm mục tiêu tiết kiệm'}
-            </h3>
-            {error && <p className="text-red-500 mb-4">{error}</p>}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">
-                  Tên mục tiêu
-                  <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Tên mục tiêu tiết kiệm của bạn" />
-                </label>
-                <input
-                  type="text"
-                  value={tenMucTieu}
-                  onChange={(e) => setTenMucTieu(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                  placeholder="Ví dụ: Mua xe"
-                  maxLength={100}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-              <div>
-                  <label className="block text-gray-700 font-medium mb-1">
-                    Số tiền mục tiêu
-                    <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Số tiền bạn muốn tiết kiệm" />
-                  </label>
-                <input
-                  type="number"
-                  value={soTienMucTieu}
-                  onChange={(e) => setSoTienMucTieu(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                  step="0.01"
-                  min="0.01"
-                  placeholder="Số tiền mục tiêu"
-                />
-              </div>
-
-              <div>
-                  <label className="block text-gray-700 font-medium mb-1">
-                    Số tiền hiện tại
-                    <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Số tiền bạn đã tiết kiệm được" />
-                  </label>
-                <input
-                  type="number"
-                  value={soTienHienTai}
-                  onChange={(e) => setSoTienHienTai(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  step="0.01"
-                  min="0"
-                  placeholder="Số tiền đã tiết kiệm"
-                />
-              </div>
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">
-                  Hạn chót
-                  <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Ngày bạn muốn hoàn thành mục tiêu" />
-                </label>
-                <input
-                  type="date"
-                  value={hanChot}
-                  onChange={(e) => setHanChot(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">
-                  Ghi chú
-                  <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Thông tin bổ sung về mục tiêu" />
-                </label>
-                <textarea
-                  value={ghiChu}
-                  onChange={(e) => setGhiChu(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ghi chú (tối đa 200 ký tự)"
-                  rows="3"
-                  maxLength={200}
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">
-                  Trạng thái
-                  <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Trạng thái hiện tại của mục tiêu" />
-                </label>
-                <select
-                  value={trangThai}
-                  onChange={(e) => setTrangThai(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Đang thực hiện">Đang thực hiện</option>
-                  <option value="Hoàn thành">Hoàn thành</option>
-                  <option value="Thất bại">Thất bại</option>
-                </select>
-              </div>
-
-              <div className="flex space-x-4">
-                <button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-200"
-                >
-                  {editId ? 'Cập nhật' : 'Thêm mục tiêu'}
-                </button>
-                  <button
-                    type="button"
-                  onClick={closeModal}
-                  className="w-full bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition duration-200"
-                  >
-                    Hủy
-                  </button>
-              </div>
-            </form>
-              </div>
-            </div>
-      )}
-
-      {/* Modal thêm nhắc nhở */}
-      {showReminderModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold mb-4">Thêm nhắc nhở</h3>
-            <div className="space-y-4">
-                  <div>
-                <label className="block text-gray-700 font-medium mb-1">
-                  Ngày nhắc nhở
-                  <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Ngày bạn muốn được nhắc nhở" />
-                </label>
-                <input
-                  type="datetime-local"
-                  value={reminderDate}
-                  onChange={(e) => setReminderDate(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                      </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">
-                  Ghi chú nhắc nhở
-                  <InformationCircleIcon className="h-5 w-5 inline ml-1 text-gray-500" title="Nội dung nhắc nhở" />
-                </label>
-                <textarea
-                  value={reminderNote}
-                  onChange={(e) => setReminderNote(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nhập nội dung nhắc nhở..."
-                  rows="3"
-                />
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            >
+              <div className="p-6 border-b border-gray-100/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl">
+                      <ArchiveBoxIcon className="w-6 h-6 text-white" />
                     </div>
-              <div className="flex space-x-4">
-                    <button
-                  onClick={handleAddReminder}
-                  className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition duration-200"
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {editId ? "Sửa Mục Tiêu" : "Thêm Mục Tiêu"}
+                    </h3>
+                  </div>
+                  <motion.button
+                    onClick={closeModal}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-all duration-200"
+                  >
+                    <XMarkIcon className="w-6 h-6" />
+                  </motion.button>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="p-4 bg-red-50/80 backdrop-blur-sm text-red-700 rounded-2xl border border-red-200/50 flex items-center space-x-3"
                     >
-                  Thêm nhắc nhở
-                    </button>
-                    <button
-                  onClick={() => {
-                    setShowReminderModal(false);
-                    setReminderDate('');
-                    setReminderNote('');
-                    setSelectedGoal(null);
-                  }}
-                  className="w-full bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition duration-200"
-                >
-                  Hủy
-                    </button>
+                      <ExclamationCircleIcon className="w-5 h-5 text-red-600" />
+                      <span className="font-medium">{error}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Tên mục tiêu */}
+                  <div className="md:col-span-2">
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <TagIcon className="h-4 w-4 text-emerald-600" />
+                      <span>Tên Mục Tiêu</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={tenMucTieu}
+                        onChange={(e) => setTenMucTieu(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-emerald-500/20 focus:shadow-lg transition-all duration-300"
+                        required
+                        placeholder="Ví dụ: Mua xe, Mua nhà..."
+                        maxLength={100}
+                      />
+                      <TagIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-emerald-500" />
+                    </div>
+                  </div>
+
+                  {/* Số tiền mục tiêu */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <BanknotesIcon className="h-4 w-4 text-blue-600" />
+                      <span>Số Tiền Mục Tiêu</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={soTienMucTieu}
+                        onChange={(e) => setSoTienMucTieu(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-blue-500/20 focus:shadow-lg transition-all duration-300"
+                        required
+                        step="0.01"
+                        min="0.01"
+                        placeholder="Số tiền mục tiêu"
+                      />
+                      <BanknotesIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-500" />
+                    </div>
+                  </div>
+
+                  {/* Số tiền hiện tại */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <ChartBarIcon className="h-4 w-4 text-purple-600" />
+                      <span>Số Tiền Hiện Tại</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={soTienHienTai}
+                        onChange={(e) => setSoTienHienTai(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-purple-500/20 focus:shadow-lg transition-all duration-300"
+                        step="0.01"
+                        min="0"
+                        placeholder="Số tiền đã tiết kiệm"
+                      />
+                      <ChartBarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-500" />
+                    </div>
+                  </div>
+
+                  {/* Hạn chót */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <CalendarIcon className="h-4 w-4 text-indigo-600" />
+                      <span>Hạn Chót</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        value={hanChot}
+                        onChange={(e) => setHanChot(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-indigo-500/20 focus:shadow-lg transition-all duration-300"
+                        required
+                      />
+                      <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-indigo-500" />
+                    </div>
+                  </div>
+
+                  {/* Trạng thái */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <CheckCircleIcon className="h-4 w-4 text-pink-600" />
+                      <span>Trạng Thái</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={trangThai}
+                        onChange={(e) => setTrangThai(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-pink-500/20 focus:shadow-lg transition-all duration-300 appearance-none"
+                      >
+                        <option value="Đang thực hiện">Đang thực hiện</option>
+                        <option value="Hoàn thành">Hoàn thành</option>
+                        <option value="Thất bại">Thất bại</option>
+                      </select>
+                      <CheckCircleIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-pink-500" />
+                    </div>
+                  </div>
+
+                  {/* Ghi chú */}
+                  <div className="md:col-span-2">
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <DocumentTextIcon className="h-4 w-4 text-gray-600" />
+                      <span>Ghi Chú</span>
+                    </label>
+                    <div className="relative">
+                      <textarea
+                        value={ghiChu}
+                        onChange={(e) => setGhiChu(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-gray-500/20 focus:shadow-lg transition-all duration-300 min-h-[100px] resize-none"
+                        placeholder="Nhập ghi chú (tối đa 200 ký tự)"
+                        maxLength={200}
+                      />
+                      <DocumentTextIcon className="absolute left-4 top-4 h-5 w-5 text-gray-500" />
+                    </div>
                   </div>
                 </div>
-            </div>
-        </div>
-      )}
-    </div>
+
+                <div className="flex space-x-4 pt-4">
+                  <motion.button
+                    type="button"
+                    onClick={closeModal}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-6 py-4 bg-gray-200/80 backdrop-blur-sm text-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:bg-gray-300/80"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                    <span>Hủy</span>
+                  </motion.button>
+
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-6 py-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:from-emerald-600 hover:to-blue-700"
+                  >
+                    <CheckCircleIcon className="w-5 h-5" />
+                    <span>{editId ? "Cập Nhật" : "Thêm"} Mục Tiêu</span>
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal thêm nhắc nhở */}
+      <AnimatePresence>
+        {showReminderModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            >
+              <div className="p-6 border-b border-gray-100/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl">
+                      <BellIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Thêm Nhắc Nhở
+                    </h3>
+                  </div>
+                  <motion.button
+                    onClick={() => {
+                      setShowReminderModal(false);
+                      setReminderDate('');
+                      setReminderNote('');
+                      setSelectedGoal(null);
+                    }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100 transition-all duration-200"
+                  >
+                    <XMarkIcon className="w-6 h-6" />
+                  </motion.button>
+                </div>
+              </div>
+
+              <form onSubmit={handleAddReminder} className="p-6 space-y-6">
+                <div className="space-y-6">
+                  {/* Ngày nhắc nhở */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <CalendarIcon className="h-4 w-4 text-indigo-600" />
+                      <span>Ngày Nhắc Nhở</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="datetime-local"
+                        value={reminderDate}
+                        onChange={(e) => setReminderDate(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-4 focus:ring-indigo-500/20 focus:shadow-lg transition-all duration-300"
+                        required
+                      />
+                      <CalendarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-indigo-500" />
+                    </div>
+                  </div>
+
+                  {/* Ghi chú nhắc nhở */}
+                  <div>
+                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-3">
+                      <DocumentTextIcon className="h-4 w-4 text-gray-600" />
+                      <span>Ghi Chú Nhắc Nhở</span>
+                    </label>
+                    <div className="relative">
+                      <textarea
+                        value={reminderNote}
+                        onChange={(e) => setReminderNote(e.target.value)}
+                        className="w-full p-4 pl-12 border-0 rounded-2xl bg-white/70 backdrop-blur-sm text-gray-800 placeholder-gray-400 shadow-sm focus:ring-4 focus:ring-gray-500/20 focus:shadow-lg transition-all duration-300 min-h-[100px] resize-none"
+                        placeholder="Nhập nội dung nhắc nhở..."
+                        rows="3"
+                      />
+                      <DocumentTextIcon className="absolute left-4 top-4 h-5 w-5 text-gray-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex space-x-4 pt-4">
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      setShowReminderModal(false);
+                      setReminderDate('');
+                      setReminderNote('');
+                      setSelectedGoal(null);
+                    }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-6 py-4 bg-gray-200/80 backdrop-blur-sm text-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:bg-gray-300/80"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                    <span>Hủy</span>
+                  </motion.button>
+
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-6 py-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:from-emerald-600 hover:to-blue-700"
+                  >
+                    <BellIcon className="w-5 h-5" />
+                    <span>Thêm Nhắc Nhở</span>
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

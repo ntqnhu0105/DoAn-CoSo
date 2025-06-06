@@ -77,4 +77,62 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
+// Cập nhật tài khoản
+router.put('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    console.log('PUT /accounts/:id:', id, updates);
+
+    const account = await Account.findById(id);
+
+    if (!account) {
+      return res.status(404).json({ message: 'Không tìm thấy tài khoản' });
+    }
+
+    // Kiểm tra quyền sở hữu
+    if (account.maNguoiDung.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Không có quyền sửa tài khoản này' });
+    }
+
+    // Cập nhật thông tin tài khoản
+    Object.keys(updates).forEach(key => {
+      account[key] = updates[key];
+    });
+
+    await account.save();
+    res.json(account);
+
+  } catch (error) {
+    console.error('Update account error:', error);
+    res.status(500).json({ message: 'Lỗi server khi cập nhật tài khoản', error: error.message });
+  }
+});
+
+// Xóa tài khoản
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('DELETE /accounts/:id:', id);
+
+    const account = await Account.findById(id);
+
+    if (!account) {
+      return res.status(404).json({ message: 'Không tìm thấy tài khoản' });
+    }
+
+    // Kiểm tra quyền sở hữu
+    if (account.maNguoiDung.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Không có quyền xóa tài khoản này' });
+    }
+
+    await account.deleteOne(); // Use deleteOne() instead of remove()
+    res.json({ message: 'Xóa tài khoản thành công' });
+
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ message: 'Lỗi server khi xóa tài khoản', error: error.message });
+  }
+});
+
 module.exports = router;

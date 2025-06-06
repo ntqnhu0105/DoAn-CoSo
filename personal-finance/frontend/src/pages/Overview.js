@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import { ToastContainer, toast } from "react-toastify"
@@ -16,12 +16,16 @@ import {
   CreditCardIcon,
   ChartPieIcon,
   ChartBarIcon,
+  MagnifyingGlassIcon,
   PlusIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   MinusIcon,
+  CalculatorIcon,
   DocumentTextIcon,
   ArrowPathIcon,
+  UserCircleIcon,
+  ArchiveBoxIcon,
 } from "@heroicons/react/24/outline"
 import { debounce } from "lodash"
 import { motion, AnimatePresence } from "framer-motion"
@@ -77,7 +81,7 @@ const AccountCard = ({ accounts, loading, navigate }) => {
               whileHover={{ scale: 1.1, rotate: 5 }}
               className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-3 rounded-2xl shadow-lg"
             >
-            <BanknotesIcon className="h-6 w-6 text-white" />
+            <UserCircleIcon className="h-6 w-6 text-white" />
             </motion.div>
             <div>
           <h3 className="text-lg font-bold text-gray-800">Tài khoản</h3>
@@ -121,7 +125,7 @@ const AccountCard = ({ accounts, loading, navigate }) => {
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center"
                 >
-                <BanknotesIcon className="h-8 w-8 text-gray-400" />
+                <UserCircleIcon className="h-8 w-8 text-gray-400" />
                 </motion.div>
               <p className="text-gray-500 mb-4">Chưa có tài khoản nào</p>
                 <motion.button
@@ -145,7 +149,7 @@ const AccountCard = ({ accounts, loading, navigate }) => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full px-4 py-2 pl-10 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300"
                     />
-                    <BanknotesIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   </div>
                   <select
                     value={sortBy}
@@ -268,7 +272,7 @@ const SavingGoalCard = ({ savingGoals, loading, navigate }) => {
               whileHover={{ scale: 1.1, rotate: 5 }}
               className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-2xl shadow-lg"
             >
-            <CurrencyDollarIcon className="h-6 w-6 text-white" />
+            <ArchiveBoxIcon className="h-6 w-6 text-white" />
             </motion.div>
             <div>
           <h3 className="text-lg font-bold text-gray-800">Mục tiêu tiết kiệm</h3>
@@ -336,7 +340,7 @@ const SavingGoalCard = ({ savingGoals, loading, navigate }) => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full px-4 py-2 pl-10 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
                     />
-                    <CurrencyDollarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   </div>
                   <div className="flex gap-2">
                     <select
@@ -542,7 +546,7 @@ const InvestmentCard = ({ investments, loading, navigate }) => {
               whileHover={{ scale: 1.1, rotate: 5 }}
               className="bg-gradient-to-br from-purple-500 to-purple-600 p-3 rounded-2xl shadow-lg"
             >
-            <ChartBarIcon className="h-6 w-6 text-white" />
+            <ArrowTrendingUpIcon className="h-6 w-6 text-white" />
             </motion.div>
             <div>
           <h3 className="text-lg font-bold text-gray-800">Đầu tư</h3>
@@ -609,7 +613,7 @@ const InvestmentCard = ({ investments, loading, navigate }) => {
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center"
                 >
-                <ChartBarIcon className="h-8 w-8 text-gray-400" />
+                <ArrowTrendingUpIcon className="h-8 w-8 text-gray-400" />
                 </motion.div>
               <p className="text-gray-500 mb-4">Chưa có khoản đầu tư nào</p>
                 <motion.button
@@ -633,7 +637,7 @@ const InvestmentCard = ({ investments, loading, navigate }) => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full px-4 py-2 pl-10 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-300"
                     />
-                    <ChartBarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   </div>
                   <div className="flex gap-2">
                     <select
@@ -1266,7 +1270,7 @@ const DebtCard = ({ debts, loading, navigate }) => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full px-4 py-2 pl-10 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-300"
                     />
-                    <CreditCardIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   </div>
                   <div className="flex gap-2">
                     <select
@@ -1364,6 +1368,63 @@ const DebtCard = ({ debts, loading, navigate }) => {
 )
 }
 
+// Add these new components at the top of the file, after imports
+const AnimatedSlide = React.memo(({ children, isVisible }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : 100 }}
+      exit={{ opacity: 0, x: -100 }}
+      transition={{ duration: 0.3, ease: "easeInOut" }}
+      className="relative"
+    >
+      {children}
+    </motion.div>
+  )
+})
+
+const AnimatedBudgetItem = React.memo(({ budget, progress, remainingAmount, getProgressColor, getProgressText, getStatusBadge }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.2 }}
+      whileHover={{ scale: 1.02 }}
+      className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-white/50 hover:bg-white/90 hover:shadow-md transition-all duration-300"
+    >
+      <div className="flex justify-between items-center mb-3">
+        <div>
+          <p className="font-semibold text-gray-800">{budget.tenDanhMuc}</p>
+          {getStatusBadge(budget)}
+        </div>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          className={`text-sm font-bold px-2 py-1 rounded-full ${getProgressText(progress)}`}
+        >
+          {progress.toFixed(0)}%
+        </motion.div>
+      </div>
+
+      <div className="relative">
+        <div className="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min(progress, 100)}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className={`h-2 rounded-full bg-gradient-to-r ${getProgressColor(progress)} transition-all duration-1000 ease-out`}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-gray-600">
+          <span>Đã chi: {formatCurrency(budget.spent)}</span>
+          <span>Còn lại: {formatCurrency(remainingAmount)}</span>
+          <span>Tổng: {formatCurrency(budget.soTien)}</span>
+        </div>
+      </div>
+    </motion.div>
+  )
+})
+
 // Sub-component: BudgetCard
 const BudgetCard = ({ budgets, navigate }) => {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -1374,6 +1435,8 @@ const BudgetCard = ({ budgets, navigate }) => {
   const [viewMode, setViewMode] = useState('split') // 'split', 'chart', 'list'
   const [timeRange, setTimeRange] = useState('month') // 'week', 'month', 'year'
   const [selectedCategory, setSelectedCategory] = useState('all') // 'all', 'over', 'under'
+  const [mounted, setMounted] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
 
   const filteredBudgets = useMemo(() => {
     return budgets
@@ -1490,6 +1553,16 @@ const BudgetCard = ({ budgets, navigate }) => {
     return getTotalBudget() - getTotalSpent()
   }
 
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
+
+  useEffect(() => {
+    setIsVisible(true)
+    return () => setIsVisible(false)
+  }, [])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -1504,7 +1577,7 @@ const BudgetCard = ({ budgets, navigate }) => {
               whileHover={{ scale: 1.1, rotate: 5 }}
               className="bg-gradient-to-br from-orange-500 to-orange-600 p-3 rounded-2xl shadow-lg"
             >
-              <ChartPieIcon className="h-6 w-6 text-white" />
+              <CalculatorIcon className="h-6 w-6 text-white" />
             </motion.div>
             <div>
             <h3 className="text-lg font-bold text-gray-800">Ngân sách</h3>
@@ -1567,7 +1640,7 @@ const BudgetCard = ({ budgets, navigate }) => {
               whileHover={{ scale: 1.1, rotate: 5 }}
               className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center"
             >
-              <ChartPieIcon className="h-8 w-8 text-gray-400" />
+              <CalculatorIcon className="h-8 w-8 text-gray-400" />
             </motion.div>
             <p className="text-gray-500 mb-4">Chưa có ngân sách nào</p>
             <motion.button
@@ -1591,7 +1664,7 @@ const BudgetCard = ({ budgets, navigate }) => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full px-4 py-2 pl-10 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300"
                 />
-                <ChartPieIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               </div>
               <div className="flex gap-2">
                 <select
@@ -1749,48 +1822,20 @@ const BudgetCard = ({ budgets, navigate }) => {
                     viewMode === 'list' ? 'space-y-3' : 'space-y-3 max-h-64'
                   } overflow-y-auto custom-scrollbar`}
                 >
-                  <AnimatePresence>
-                    {filteredBudgets.map((budget, index) => {
+                  <AnimatePresence mode="wait" initial={false}>
+                    {isVisible && filteredBudgets.map((budget) => {
                       const progress = getProgressPercentage(budget)
                       const remainingAmount = getRemainingAmount(budget)
                       return (
-                        <motion.div
-                  key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                          whileHover={{ scale: 1.02 }}
-                  className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-white/50 hover:bg-white/90 hover:shadow-md transition-all duration-300"
-                >
-                  <div className="flex justify-between items-center mb-3">
-                            <div>
-                    <p className="font-semibold text-gray-800">{budget.tenDanhMuc}</p>
-                              {getStatusBadge(budget)}
-                            </div>
-                            <motion.div
-                              whileHover={{ scale: 1.05 }}
-                              className={`text-sm font-bold px-2 py-1 rounded-full ${getProgressText(progress)}`}
-                    >
-                              {progress.toFixed(0)}%
-                            </motion.div>
-                  </div>
-
-                  <div className="relative">
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min(progress, 100)}%` }}
-                                transition={{ duration: 1, ease: "easeOut" }}
-                                className={`h-2 rounded-full bg-gradient-to-r ${getProgressColor(progress)} transition-all duration-1000 ease-out`}
-                              />
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-600">
-                              <span>Đã chi: {formatCurrency(budget.spent)}</span>
-                              <span>Còn lại: {formatCurrency(remainingAmount)}</span>
-                              <span>Tổng: {formatCurrency(budget.soTien)}</span>
-                    </div>
-                  </div>
-                        </motion.div>
+                        <AnimatedBudgetItem
+                          key={budget._id || budget.tenDanhMuc}
+                          budget={budget}
+                          progress={progress}
+                          remainingAmount={remainingAmount}
+                          getProgressColor={getProgressColor}
+                          getProgressText={getProgressText}
+                          getStatusBadge={getStatusBadge}
+                        />
                       )
                     })}
                   </AnimatePresence>
@@ -1815,6 +1860,54 @@ const BudgetCard = ({ budgets, navigate }) => {
   )
 }
 
+// Add this new component before the Overview component
+const TimeRangeSelector = ({ timeRange, onTimeRangeChange, isRefreshing }) => {
+  const ranges = [
+    { 
+      label: "Tuần", 
+      value: "week",
+      activeGradient: "from-emerald-500 via-teal-500 to-cyan-500",
+      hoverGradient: "from-emerald-600 via-teal-600 to-cyan-600"
+    },
+    { 
+      label: "Tháng", 
+      value: "month",
+      activeGradient: "from-blue-500 via-indigo-500 to-violet-500",
+      hoverGradient: "from-blue-600 via-indigo-600 to-violet-600"
+    },
+    { 
+      label: "Quý", 
+      value: "quarter",
+      activeGradient: "from-purple-500 via-fuchsia-500 to-pink-500",
+      hoverGradient: "from-purple-600 via-fuchsia-600 to-pink-600"
+    },
+    { 
+      label: "Năm", 
+      value: "year",
+      activeGradient: "from-rose-500 via-orange-500 to-amber-500",
+      hoverGradient: "from-rose-600 via-orange-600 to-amber-600"
+    }
+  ];
+
+  return (
+    <div className="bg-white/70 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-gray-100 flex space-x-2">
+      {ranges.map(({ label, value, activeGradient, hoverGradient }) => (
+        <div
+          key={label}
+          onClick={() => !isRefreshing && onTimeRangeChange(label)}
+          className={`px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-all duration-300 ${
+            timeRange === value
+              ? `bg-gradient-to-r ${activeGradient} text-white shadow-lg hover:shadow-xl hover:bg-gradient-to-r ${hoverGradient}`
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          } ${isRefreshing ? "opacity-50 cursor-not-allowed" : ""}`}
+        >
+          {label}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // Main Overview Component
 const Overview = () => {
   const [data, setData] = useState(null)
@@ -1830,11 +1923,14 @@ const Overview = () => {
   const navigate = useNavigate()
   const [viewMode, setViewMode] = useState('list')
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
 
   const slides = [
     {
       component: <AccountCard accounts={data?.accounts || { list: [], totalBalance: 0 }} loading={loadingAccounts} navigate={navigate} />,
-      icon: BanknotesIcon,
+      icon: UserCircleIcon,
       color: 'from-emerald-500 to-emerald-600',
       title: 'Tài khoản'
     },
@@ -1846,7 +1942,7 @@ const Overview = () => {
     },
     {
       component: <InvestmentCard investments={data?.investments || { list: [], totalInvestment: 0, totalProfit: 0 }} loading={loadingInvestments} navigate={navigate} />,
-      icon: ChartBarIcon,
+      icon: ArrowTrendingUpIcon,
       color: 'from-purple-500 to-purple-600',
       title: 'Đầu tư'
     },
@@ -1864,13 +1960,22 @@ const Overview = () => {
     }
   ]
 
-  const handleSlideChange = (direction) => {
+  const handleSlideChange = useCallback((direction) => {
+    if (isTransitioning || !isVisible) return
+    
+    setIsTransitioning(true)
     if (direction === 'next') {
       setCurrentSlide((prev) => (prev + 1) % slides.length)
     } else {
       setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
     }
-  }
+    
+    const timer = setTimeout(() => {
+      setIsTransitioning(false)
+    }, 300)
+    
+    return () => clearTimeout(timer)
+  }, [isTransitioning, isVisible])
 
   const userId = localStorage.getItem("userId")?.replace(/[^\w-]/g, "")
 
@@ -1969,6 +2074,11 @@ const Overview = () => {
     preventDefaultTouchmoveEvent: true,
     trackMouse: true
   })
+
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
 
   if (error) {
     return (
@@ -2076,35 +2186,24 @@ const Overview = () => {
                 List View
               </motion.button>
             </div>
-            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-gray-100">
-              {["Tuần", "Tháng", "Quý", "Năm"].map((range) => (
-                <motion.button
-                  key={range}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleTimeRangeChange(range)}
-                  disabled={isRefreshing}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    timeRange === range.toLowerCase()
-                      ? "bg-gradient-to-r from-emerald-500 to-blue-600 text-white shadow-md"
-                      : "text-gray-600 hover:bg-gray-50"
-                  } ${isRefreshing ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  {range}
-                </motion.button>
-              ))}
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.05, rotate: 180 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className={`p-2 bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:text-emerald-600 transition-colors duration-300 ${
+            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-2 shadow-sm border border-gray-100 flex space-x-2">
+              <TimeRangeSelector 
+                timeRange={timeRange} 
+                onTimeRangeChange={handleTimeRangeChange} 
+                isRefreshing={isRefreshing}
+              />
+              <motion.button
+                whileHover={{ scale: 1.05, rotate: 180 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className={`p-2 bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-gray-100 text-gray-600 hover:text-emerald-600 transition-colors duration-300 ${
                 isRefreshing ? "opacity-50 cursor-not-allowed" : ""
               }`}
-            >
-              <ArrowPathIcon className="h-5 w-5" />
-            </motion.button>
+              >
+                <ArrowPathIcon className="h-5 w-5" />
+              </motion.button>
+            </div>
           </div>
         </motion.div>
 
@@ -2112,28 +2211,37 @@ const Overview = () => {
         {viewMode === 'slideshow' ? (
           <div className="relative">
             <div {...handlers}>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentSlide}
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative"
-                >
-                  <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50">
-                    {slides[currentSlide].component}
-                  </div>
-                </motion.div>
+              <AnimatePresence mode="wait" initial={false}>
+                {mounted && (
+                  <motion.div
+                    key={currentSlide}
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ 
+                      duration: 0.3,
+                      ease: "easeInOut"
+                    }}
+                    className="relative"
+                  >
+                    <div className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50">
+                      {slides[currentSlide].component}
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
             <div className="mt-8 flex justify-center space-x-4">
               {slides.map((slide, index) => (
                 <motion.button
-                  key={index}
+                  key={slide.title}
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setCurrentSlide(index)}
+                  onClick={() => {
+                    if (!isTransitioning && mounted) {
+                      setCurrentSlide(index)
+                    }
+                  }}
                   className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
                     currentSlide === index 
                       ? "border-emerald-500 scale-110" 
@@ -2151,26 +2259,37 @@ const Overview = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-4 space-y-6">
+            {/* Hàng 1 */}
+            <div className="lg:col-span-4">
               <AccountCard accounts={data?.accounts || { list: [], totalBalance: 0 }} loading={loadingAccounts} navigate={navigate} />
-              <SavingGoalCard savingGoals={data?.savingGoals || { list: [], totalSavings: 0 }} loading={loadingSavingGoals} navigate={navigate} />
             </div>
-            <div className="lg:col-span-5 space-y-6">
+            <div className="lg:col-span-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50"
+                className="bg-white/80 backdrop-blur-lg p-6 rounded-3xl shadow-lg border border-gray-100/50 h-full"
               >
                 <IncomeExpenseChart 
                   transactions={data?.transactions || { totalIncome: 0, totalExpense: 0 }} 
                   timeRange={timeRange}
                 />
               </motion.div>
+            </div>
+
+            {/* Hàng 2 */}
+            <div className="lg:col-span-6">
+              <InvestmentCard investments={data?.investments || { list: [], totalInvestment: 0, totalProfit: 0 }} loading={loadingInvestments} navigate={navigate} />
+            </div>
+            <div className="lg:col-span-6">
               <BudgetCard budgets={data?.budgets || []} navigate={navigate} />
             </div>
-            <div className="lg:col-span-3 space-y-6">
-              <InvestmentCard investments={data?.investments || { list: [], totalInvestment: 0, totalProfit: 0 }} loading={loadingInvestments} navigate={navigate} />
+
+            {/* Hàng 3 */}
+            <div className="lg:col-span-6">
               <DebtCard debts={data?.debts || { list: [], totalDebt: 0 }} loading={loadingDebts} navigate={navigate} />
+            </div>
+            <div className="lg:col-span-6">
+              <SavingGoalCard savingGoals={data?.savingGoals || { list: [], totalSavings: 0 }} loading={loadingSavingGoals} navigate={navigate} />
             </div>
           </div>
         )}
@@ -2184,7 +2303,8 @@ const Overview = () => {
           <div className="flex items-center space-x-2">
             {[
               { icon: PlusIcon, label: "Thêm giao dịch", path: "/dashboard" },
-              { icon: BanknotesIcon, label: "Quản lý tài khoản", path: "/accounts" },
+              { icon: UserCircleIcon, label: "Quản lý tài khoản", path: "/accounts" },
+              { icon: ArrowTrendingUpIcon, label: "Đầu tư", path: "/investments" },
               { icon: ChartPieIcon, label: "Báo cáo", path: "/reports" },
               { icon: CreditCardIcon, label: "Ngân sách", path: "/budgets" }
             ].map((action) => (
@@ -2202,7 +2322,7 @@ const Overview = () => {
           </div>
         </motion.div>
       </div>
-    </div>
+    </div>  
   )
 }
 

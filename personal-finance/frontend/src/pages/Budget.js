@@ -16,7 +16,8 @@ import {
   ExclamationTriangleIcon,
   CalendarIcon,
   BanknotesIcon,
-  TagIcon,
+  ArrowDownCircleIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline"
 
 const Budget = () => {
@@ -320,7 +321,7 @@ const Budget = () => {
             <CalculatorIcon className="w-10 h-10 text-white" />
           </motion.div>
           <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-2">
-            Quản lý Ngân sách
+            Ngân Sách
           </h2>
           <p className="text-gray-600 font-medium">Lập kế hoạch và theo dõi chi tiêu thông minh</p>
         </motion.div>
@@ -362,7 +363,7 @@ const Budget = () => {
         >
           <div className="p-6 border-b border-gray-100/50">
             <h3 className="text-xl font-semibold text-gray-800 flex items-center space-x-3">
-              <BanknotesIcon className="w-6 h-6 text-emerald-600" />
+              <ClipboardDocumentListIcon className="w-6 h-6 text-emerald-600" />
               <span>Danh sách Ngân sách</span>
             </h3>
           </div>
@@ -398,7 +399,7 @@ const Budget = () => {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-3">
                           <div className="p-2 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-lg">
-                            <TagIcon className="w-5 h-5 text-white" />
+                            <CalculatorIcon className="w-5 h-5 text-white" />
                           </div>
                           <div>
                             <h4 className="font-semibold text-gray-900 text-lg">
@@ -550,7 +551,7 @@ const Budget = () => {
                           ))
                         )}
                       </select>
-                      <TagIcon
+                      <ArrowDownCircleIcon
                         className={`w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
                           focusedField === "category" ? "text-emerald-600" : "text-gray-400"
                         }`}

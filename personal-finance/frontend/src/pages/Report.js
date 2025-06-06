@@ -12,6 +12,8 @@ import {
   CurrencyDollarIcon,
   DocumentChartBarIcon,
   ChartBarIcon,
+  ChartPieIcon,
+  ClipboardDocumentListIcon,
   CalendarIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline"
@@ -166,32 +168,18 @@ const Report = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 py-8 px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-pink-100 to-yellow-100 py-10 px-2 md:px-8 relative overflow-hidden">
       {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
         <motion.div
-          animate={{
-            x: [0, 100, 0],
-            y: [0, -100, 0],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "linear",
-          }}
-          className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-emerald-200/30 to-blue-200/30 rounded-full blur-3xl"
+          animate={{ x: [0, 120, 0], y: [0, -120, 0] }}
+          transition={{ duration: 22, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+          className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-gradient-to-br from-indigo-200/40 to-pink-200/40 rounded-full blur-3xl"
         />
         <motion.div
-          animate={{
-            x: [0, -100, 0],
-            y: [0, 100, 0],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "linear",
-          }}
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-200/30 to-pink-200/30 rounded-full blur-3xl"
+          animate={{ x: [0, -120, 0], y: [0, 120, 0] }}
+          transition={{ duration: 28, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-gradient-to-br from-yellow-200/40 to-pink-200/40 rounded-full blur-3xl"
         />
       </div>
 
@@ -207,9 +195,9 @@ const Report = () => {
         pauseOnHover
         theme="light"
         toastStyle={{
-          borderRadius: "16px",
-          backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
+          borderRadius: "18px",
+          backdropFilter: "blur(12px)",
+          border: "1.5px solid rgba(255,255,255,0.25)",
         }}
       />
 
@@ -220,19 +208,19 @@ const Report = () => {
         className="relative z-10 max-w-7xl mx-auto"
       >
         {/* Header */}
-        <motion.div variants={itemVariants} className="text-center mb-8">
+        <motion.div variants={itemVariants} className="text-center mb-10">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg"
+            className="w-24 h-24 bg-gradient-to-br from-indigo-400 to-pink-400 rounded-3xl mx-auto mb-5 flex items-center justify-center shadow-2xl border-4 border-white/40"
           >
-            <DocumentChartBarIcon className="w-10 h-10 text-white" />
+            <ChartPieIcon className="w-12 h-12 text-white drop-shadow-lg" />
           </motion.div>
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-            Báo cáo Tài chính
+          <h2 className="text-5xl font-extrabold bg-gradient-to-r from-indigo-500 via-pink-500 to-yellow-500 bg-clip-text text-transparent drop-shadow-md">
+            Báo Cáo
           </h2>
-          <p className="text-gray-600 mt-2 font-medium">Phân tích và theo dõi tình hình tài chính của bạn</p>
+          <p className="text-gray-600 mt-3 font-medium text-lg">Phân tích & theo dõi tài chính cá nhân của bạn</p>
         </motion.div>
 
         {/* Error Display */}
@@ -242,10 +230,10 @@ const Report = () => {
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="mb-6 p-4 bg-red-50/80 backdrop-blur-sm text-red-700 rounded-2xl border border-red-200/50 flex items-center space-x-3 shadow-sm max-w-4xl mx-auto"
+              className="mb-6 p-4 bg-red-100/80 backdrop-blur-md text-red-700 rounded-2xl border border-red-200/60 flex items-center space-x-3 shadow-lg max-w-4xl mx-auto"
             >
-              <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-7 h-7 bg-red-200 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -259,100 +247,152 @@ const Report = () => {
         </AnimatePresence>
 
         {/* Summary Cards */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
           <motion.div
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-white/20"
+            whileHover={{ scale: 1.04, y: -6 }}
+            className="bg-white/60 backdrop-blur-lg p-7 rounded-3xl shadow-2xl border border-white/30 transition-all duration-300 hover:shadow-[0_8px_32px_0_rgba(31,41,55,0.18)]"
           >
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center">
-                <ArrowUpCircleIcon className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-5">
+              <div className="w-14 h-14 bg-gradient-to-br from-indigo-400 to-green-400 rounded-2xl flex items-center justify-center shadow-lg">
+                <ArrowUpCircleIcon className="w-8 h-8 text-white" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-700">Tổng thu nhập</h3>
-                <p className="text-2xl font-bold text-emerald-600">{totalIncome.toLocaleString()} VNĐ</p>
+                <p className="text-3xl font-extrabold text-emerald-500">{totalIncome.toLocaleString()} VNĐ</p>
               </div>
             </div>
           </motion.div>
 
           <motion.div
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-white/20"
+            whileHover={{ scale: 1.04, y: -6 }}
+            className="bg-white/60 backdrop-blur-lg p-7 rounded-3xl shadow-2xl border border-white/30 transition-all duration-300 hover:shadow-[0_8px_32px_0_rgba(239,68,68,0.18)]"
           >
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-600 rounded-2xl flex items-center justify-center">
-                <ArrowDownCircleIcon className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-5">
+              <div className="w-14 h-14 bg-gradient-to-br from-pink-400 to-red-400 rounded-2xl flex items-center justify-center shadow-lg">
+                <ArrowDownCircleIcon className="w-8 h-8 text-white" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-700">Tổng chi tiêu</h3>
-                <p className="text-2xl font-bold text-red-600">{totalExpense.toLocaleString()} VNĐ</p>
+                <p className="text-3xl font-extrabold text-pink-500">{totalExpense.toLocaleString()} VNĐ</p>
               </div>
             </div>
           </motion.div>
 
           <motion.div
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-white/20"
+            whileHover={{ scale: 1.04, y: -6 }}
+            className="bg-white/60 backdrop-blur-lg p-7 rounded-3xl shadow-2xl border border-white/30 transition-all duration-300 hover:shadow-[0_8px_32px_0_rgba(59,130,246,0.18)]"
           >
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center">
-                <CurrencyDollarIcon className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-5">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-2xl flex items-center justify-center shadow-lg">
+                <CurrencyDollarIcon className="w-8 h-8 text-white" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-700">Tổng tiết kiệm</h3>
-                <p className="text-2xl font-bold text-blue-600">{totalSavings.toLocaleString()} VNĐ</p>
+                <p className="text-3xl font-extrabold text-blue-500">{totalSavings.toLocaleString()} VNĐ</p>
               </div>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Filter and Generate Report */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Chart */}
+        {filteredReports.length > 0 && (
           <motion.div
-            whileHover={{ scale: 1.01 }}
-            className="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-white/20"
+            variants={itemVariants}
+            className="bg-white/70 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/30 mb-10"
           >
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center">
-                <CalendarIcon className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-4 mb-7">
+              <div className="w-14 h-14 bg-gradient-to-br from-indigo-400 to-pink-400 rounded-2xl flex items-center justify-center shadow-lg">
+                <ChartBarIcon className="w-8 h-8 text-white" />
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Lọc theo năm</h3>
-                <select
-                  value={filterYear}
-                  onChange={(e) => setFilterYear(e.target.value)}
-                  className="w-full p-3 border-0 rounded-xl bg-white/60 backdrop-blur-sm text-gray-800 shadow-sm transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
-                >
-                  <option value="Tất cả">Tất cả các năm</option>
-                  {uniqueYears.map((year) => (
-                    <option key={year} value={year}>
-                      Năm {year}
-                    </option>
-                  ))}
-                </select>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800">Biểu đồ tài chính theo tháng</h3>
+                <p className="text-gray-600 text-base">
+                  {filterYear === "Tất cả" ? "Tất cả các năm" : `Năm ${filterYear}`}
+                </p>
               </div>
             </div>
+            <div className="h-96 p-4 bg-white/60 backdrop-blur-md rounded-2xl shadow-inner">
+              <Line
+                data={chartData()}
+                options={{
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: { display: true, text: "Giá trị (VNĐ)" },
+                      grid: { color: "rgba(0, 0, 0, 0.05)" },
+                    },
+                    x: {
+                      title: { display: true, text: "Tháng" },
+                      grid: { display: false },
+                    },
+                  },
+                  plugins: {
+                    legend: { display: true, position: "top" },
+                    tooltip: {
+                      backgroundColor: "rgba(255, 255, 255, 0.95)",
+                      titleColor: "#1f2937",
+                      bodyColor: "#1f2937",
+                      borderColor: "rgba(0, 0, 0, 0.1)",
+                      borderWidth: 1,
+                      cornerRadius: 12,
+                      padding: 14,
+                      boxPadding: 8,
+                      usePointStyle: true,
+                    },
+                  },
+                  interaction: {
+                    intersect: false,
+                    mode: "index",
+                  },
+                  responsive: true,
+                }}
+              />
+            </div>
           </motion.div>
+        )}
 
-          <motion.div
-            whileHover={{ scale: 1.01 }}
-            className="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-white/20"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center">
-                <PlusIcon className="w-6 h-6 text-white" />
+        {/* Reports Table */}
+        <motion.div
+          variants={itemVariants}
+          className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/30 overflow-hidden"
+        >
+          <div className="p-7 border-b border-gray-100/60 bg-gradient-to-r from-indigo-100/60 to-pink-100/60">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-indigo-400 to-pink-400 rounded-2xl flex items-center justify-center shadow-lg">
+                  <DocumentChartBarIcon className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-800">Danh sách báo cáo</h3>
+                  <p className="text-gray-600 text-base">Chi tiết báo cáo tài chính theo tháng</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Tạo báo cáo mới</h3>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3 bg-white/60 backdrop-blur-md p-2 rounded-xl border border-white/30">
+                  <CalendarIcon className="w-5 h-5 text-gray-500" />
+                  <select
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                    className="bg-transparent text-gray-700 font-medium focus:outline-none"
+                  >
+                    <option value="Tất cả">Tất cả các năm</option>
+                    {uniqueYears.map((year) => (
+                      <option key={year} value={year}>
+                        Năm {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <motion.button
                   onClick={handleGenerateReport}
                   disabled={generating}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: generating ? 1 : 1.04 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`w-full px-4 py-3 rounded-xl text-white flex items-center justify-center space-x-2 transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-xl text-white flex items-center space-x-2 transition-all duration-300 ${
                     generating
                       ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-amber-500 to-orange-600 hover:shadow-lg"
+                      : "bg-gradient-to-r from-yellow-400 to-orange-400 hover:shadow-lg"
                   }`}
                 >
                   {generating ? (
@@ -379,91 +419,15 @@ const Report = () => {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </motion.svg>
-                      <span>Đang tạo báo cáo...</span>
+                      <span>Đang tạo...</span>
                     </>
                   ) : (
                     <>
-                      <ChartBarIcon className="h-5 w-5" />
-                      <span>Tạo báo cáo tháng trước</span>
+                      <PlusIcon className="h-5 w-5" />
+                      <span>Tạo báo cáo</span>
                     </>
                   )}
                 </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* Chart */}
-        {filteredReports.length > 0 && (
-          <motion.div
-            variants={itemVariants}
-            className="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-white/20 mb-8"
-          >
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl flex items-center justify-center">
-                <ChartBarIcon className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">Biểu đồ tài chính theo tháng</h3>
-                <p className="text-gray-600 text-sm">
-                  {filterYear === "Tất cả" ? "Tất cả các năm" : `Năm ${filterYear}`}
-                </p>
-              </div>
-            </div>
-            <div className="h-80 p-4 bg-white/50 backdrop-blur-sm rounded-2xl">
-              <Line
-                data={chartData()}
-                options={{
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      title: { display: true, text: "Giá trị (VNĐ)" },
-                      grid: { color: "rgba(0, 0, 0, 0.05)" },
-                    },
-                    x: {
-                      title: { display: true, text: "Tháng" },
-                      grid: { display: false },
-                    },
-                  },
-                  plugins: {
-                    legend: { display: true, position: "top" },
-                    tooltip: {
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      titleColor: "#1f2937",
-                      bodyColor: "#1f2937",
-                      borderColor: "rgba(0, 0, 0, 0.1)",
-                      borderWidth: 1,
-                      cornerRadius: 10,
-                      padding: 12,
-                      boxPadding: 6,
-                      usePointStyle: true,
-                    },
-                  },
-                  interaction: {
-                    intersect: false,
-                    mode: "index",
-                  },
-                  responsive: true,
-                }}
-              />
-            </div>
-          </motion.div>
-        )}
-
-        {/* Reports Table */}
-        <motion.div
-          variants={itemVariants}
-          className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 overflow-hidden"
-        >
-          <div className="p-6 border-b border-gray-100/50">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl flex items-center justify-center">
-                <DocumentChartBarIcon className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-800">Danh sách báo cáo</h3>
-                <p className="text-gray-600 text-sm">Chi tiết báo cáo tài chính theo tháng</p>
               </div>
             </div>
           </div>
@@ -472,29 +436,29 @@ const Report = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex justify-center items-center py-12"
+              className="flex justify-center items-center py-16"
             >
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full"
+                className="w-14 h-14 border-4 border-indigo-400 border-t-transparent rounded-full"
               />
-              <span className="ml-4 text-gray-600 font-medium">Đang tải báo cáo...</span>
+              <span className="ml-5 text-gray-600 font-medium text-lg">Đang tải báo cáo...</span>
             </motion.div>
           ) : filteredReports.length === 0 ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-12">
-              <DocumentChartBarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">Chưa có báo cáo nào</p>
-              <p className="text-gray-400 mt-2 max-w-md mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16">
+              <DocumentChartBarIcon className="w-20 h-20 text-gray-300 mx-auto mb-5" />
+              <p className="text-gray-500 text-xl">Chưa có báo cáo nào</p>
+              <p className="text-gray-400 mt-3 max-w-md mx-auto">
                 Vui lòng thử{" "}
                 <button
                   onClick={handleGenerateReport}
-                  className="text-emerald-500 underline hover:text-emerald-600 font-medium"
+                  className="text-indigo-500 underline hover:text-pink-500 font-medium"
                 >
                   tạo báo cáo thủ công
                 </button>{" "}
                 hoặc{" "}
-                <a href="/transactions" className="text-emerald-500 underline hover:text-emerald-600 font-medium">
+                <a href="/transactions" className="text-indigo-500 underline hover:text-pink-500 font-medium">
                   thêm giao dịch
                 </a>{" "}
                 để tạo báo cáo tự động vào đầu tháng sau.
@@ -502,30 +466,30 @@ const Report = () => {
             </motion.div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-100/50">
-                <thead className="bg-gray-50/50 backdrop-blur-sm sticky top-0 z-10">
+              <table className="min-w-full divide-y divide-gray-100/60">
+                <thead className="bg-gradient-to-r from-indigo-100/60 to-pink-100/60 backdrop-blur-md sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-7 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Tháng
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-7 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Năm
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-7 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Thu nhập (VNĐ)
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-7 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Chi tiêu (VNĐ)
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-7 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Tiết kiệm (VNĐ)
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-7 py-5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Ghi chú
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white/30 backdrop-blur-sm divide-y divide-gray-100/50">
+                <tbody className="bg-white/40 backdrop-blur-md divide-y divide-gray-100/60">
                   <AnimatePresence>
                     {filteredReports.map((rep, index) => (
                       <motion.tr
@@ -533,31 +497,31 @@ const Report = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.05)" }}
-                        className="hover:bg-emerald-50/50 transition-all duration-200"
+                        transition={{ delay: index * 0.04 }}
+                        whileHover={{ backgroundColor: "rgba(99,102,241,0.07)" }}
+                        className="hover:bg-indigo-50/60 transition-all duration-200"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-7 py-5 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold mr-3">
+                            <div className="w-9 h-9 bg-gradient-to-br from-indigo-400 to-pink-400 rounded-lg flex items-center justify-center text-white font-bold mr-3">
                               {rep.thang}
                             </div>
-                            <span className="font-medium text-gray-900">Tháng {rep.thang}</span>
+                            <span className="font-semibold text-gray-900">Tháng {rep.thang}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-800">{rep.nam}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-emerald-600 font-semibold">{rep.tongThuNhap.toLocaleString()} VNĐ</span>
+                        <td className="px-7 py-5 whitespace-nowrap text-gray-800 font-semibold">{rep.nam}</td>
+                        <td className="px-7 py-5 whitespace-nowrap">
+                          <span className="text-emerald-500 font-bold">{rep.tongThuNhap.toLocaleString()} VNĐ</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-red-600 font-semibold">{rep.tongChiTieu.toLocaleString()} VNĐ</span>
+                        <td className="px-7 py-5 whitespace-nowrap">
+                          <span className="text-pink-500 font-bold">{rep.tongChiTieu.toLocaleString()} VNĐ</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-blue-600 font-semibold">
+                        <td className="px-7 py-5 whitespace-nowrap">
+                          <span className="text-indigo-500 font-bold">
                             {(rep.soTienTietKiem || 0).toLocaleString()} VNĐ
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">{rep.ghiChu || "-"}</td>
+                        <td className="px-7 py-5 whitespace-nowrap text-gray-600">{rep.ghiChu || "-"}</td>
                       </motion.tr>
                     ))}
                   </AnimatePresence>

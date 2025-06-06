@@ -250,9 +250,21 @@ const Category = () => {
         transition={{ duration: 0.5 }}
         className="max-w-4xl mx-auto"
       >
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-8">
-          Quản lý danh mục
-        </h2>
+        {/* Header */}
+        <motion.div variants={itemVariants} className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg"
+          >
+            <TagIcon className="w-10 h-10 text-white" />
+          </motion.div>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            Danh Mục
+          </h2>
+          <p className="text-gray-600 font-medium">Phân loại và quản lý các danh mục chi tiêu</p>
+        </motion.div>
 
         {error && (
           <motion.div
