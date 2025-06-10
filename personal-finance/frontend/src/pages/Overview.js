@@ -1628,6 +1628,7 @@ const BudgetCard = ({ budgets, navigate }) => {
               </motion.button>
             </div>
           </div>
+
         </div>
 
         {budgets.length === 0 ? (
@@ -2327,3 +2328,4 @@ const Overview = () => {
 }
 
 export default Overview
+
