@@ -56,4 +56,39 @@ router.put('/:id/read', async (req, res) => {
   }
 });
 
+// Đánh dấu thông báo quan trọng
+router.put('/:id/important', async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { id } = req.params;
+    const { userId, quanTrong } = req.body;
+
+    const notification = await Notification.findById(id).session(session);
+    if (!notification) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: 'Thông báo không tồn tại' });
+    }
+
+    if (notification.maNguoiDung.toString() !== userId) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ message: 'Bạn không có quyền chỉnh sửa thông báo này' });
+    }
+
+    notification.quanTrong = quanTrong;
+    await notification.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+    res.json({ message: 'Cập nhật trạng thái quan trọng thành công', notification });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Update notification important status error:', error);
+    res.status(500).json({ message: 'Lỗi server khi cập nhật trạng thái quan trọng', error: error.message });
+  }
+});
+
 module.exports = router;
