@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const rateLimit = require('express-rate-limit');
 
 // Cấu hình multer
 const storage = multer.diskStorage({
@@ -57,8 +58,33 @@ const authenticate = async (req, res, next) => {
   }
 };
 
+// Rate limit cho đăng ký và đăng nhập: 5 lần/phút/IP
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 phút
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json({ message: 'Quá nhiều lần thử, vui lòng thử lại sau 1 phút.' });
+  },
+  onLimitReached: (req, res, options) => {
+    // Không cần xử lý ở đây, chỉ dùng handler
+  },
+  keyGenerator: (req) => req.ip,
+  skipFailedRequests: false,
+  skipSuccessfulRequests: false,
+  message: (req, res) => {
+    // Nếu còn đúng 1 lần thử cuối cùng
+    const rateLimitInfo = res.getHeaders()['x-ratelimit-remaining'];
+    if (rateLimitInfo === '1') {
+      return { message: 'Bạn còn 1 lần thử trước khi bị khóa tạm thời.' };
+    }
+    return { message: 'Quá nhiều lần thử, vui lòng thử lại sau 1 phút.' };
+  },
+});
+
 // Đăng ký
-router.post('/register', upload.single('anhDaiDien'), async (req, res) => {
+router.post('/register', authLimiter, upload.single('anhDaiDien'), async (req, res) => {
   try {
     const { tenDangNhap, matKhau, email, hoTen, ngaySinh, gioiTinh } = req.body;
     console.log('POST /register:', { tenDangNhap, email, hoTen });
@@ -114,7 +140,7 @@ router.post('/register', upload.single('anhDaiDien'), async (req, res) => {
 });
 
 // Đăng nhập
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { tenDangNhap, matKhau } = req.body;
     console.log('POST /login:', { tenDangNhap });

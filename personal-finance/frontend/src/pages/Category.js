@@ -1,10 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
-import { ToastContainer, toast } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   TagIcon,
@@ -17,6 +15,7 @@ import {
   ArrowUpCircleIcon,
   ArrowDownCircleIcon,
 } from "@heroicons/react/24/outline"
+import { toast } from "react-toastify"
 
 const Category = () => {
   const [categories, setCategories] = useState([])
@@ -226,24 +225,6 @@ const Category = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50 p-6">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        toastStyle={{
-          borderRadius: "16px",
-          backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-        }}
-      />
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

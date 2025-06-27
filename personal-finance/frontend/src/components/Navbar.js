@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { ToastContainer, toast } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
+import { toast } from "react-toastify"
 import axios from "axios"
 import { motion, AnimatePresence, useAnimation } from "framer-motion"
 import {
@@ -559,16 +558,6 @@ const Navbar = () => {
   return (
     <>
       <nav className="bg-white/95 backdrop-blur-lg shadow-lg border-b border-gray-100/50 sticky top-0 z-50">
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          theme="light"
-          toastStyle={{
-            borderRadius: "12px",
-            backdropFilter: "blur(10px)",
-          }}
-        />
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}

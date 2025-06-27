@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import axios from "axios"
 import { useNavigate, Link } from "react-router-dom"
-import { ToastContainer, toast } from "react-toastify"
+import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import {
   BanknotesIcon,
@@ -1451,16 +1451,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-emerald-50/30 py-8 px-4">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        theme="colored"
-        toastStyle={{
-          borderRadius: '12px',
-          backdropFilter: 'blur(10px)',
-        }}
-      />
-
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <motion.div

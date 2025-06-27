@@ -3,8 +3,10 @@
 import { useState } from "react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
-import { ToastContainer, toast } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
+import { toast } from "react-toastify"
+import Skeleton from "react-loading-skeleton"
+import "react-loading-skeleton/dist/skeleton.css"
+import zxcvbn from "zxcvbn"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   EyeIcon,
@@ -20,6 +22,7 @@ import {
 const Register = () => {
   const [tenDangNhap, setTenDangNhap] = useState("")
   const [matKhau, setMatKhau] = useState("")
+  const [xacNhanMatKhau, setXacNhanMatKhau] = useState("")
   const [email, setEmail] = useState("")
   const [hoTen, setHoTen] = useState("")
   const [ngaySinh, setNgaySinh] = useState("")
@@ -27,10 +30,77 @@ const Register = () => {
   const [anhDaiDien, setAnhDaiDien] = useState(null)
   const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [focusedField, setFocusedField] = useState("")
   const [currentStep, setCurrentStep] = useState(1)
+  const [isLoadingSkeleton, setIsLoadingSkeleton] = useState(false)
+  const [usernameError, setUsernameError] = useState("")
+  const [emailError, setEmailError] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+  const [confirmPasswordError, setConfirmPasswordError] = useState("")
+  const [hoTenError, setHoTenError] = useState("")
+  const [ngaySinhError, setNgaySinhError] = useState("")
+  const [gioiTinhError, setGioiTinhError] = useState("")
+  const [anhDaiDienError, setAnhDaiDienError] = useState("")
   const navigate = useNavigate()
+
+  // Password
+  const passwordStrength = zxcvbn(matKhau)
+  const strengthLabels = ["Rất yếu", "Yếu", "Trung bình", "Mạnh", "Rất mạnh"]
+  const strengthColor = ["#ef4444", "#f59e42", "#fbbf24", "#10b981", "#059669"]
+
+  // Real-time validation
+  const validateUsername = (value) => {
+    if (!value.trim()) return "Tên đăng nhập không được để trống"
+    if (/[^a-zA-Z0-9_]/.test(value)) return "Chỉ cho phép chữ, số, dấu gạch dưới"
+    if (value.length < 4) return "Tên đăng nhập tối thiểu 4 ký tự"
+    return ""
+  }
+  const validateEmail = (value) => {
+    if (!value.trim()) return "Email không được để trống"
+    // eslint-disable-next-line
+    const emailRegex = /^(([^<>()\[\]\\.,;:\s@\"]+(\.[^<>()\[\]\\.,;:\s@\"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@\"]+\.)+[^<>()[\]\\.,;:\s@\"]{2,})$/i
+    if (!emailRegex.test(value)) return "Email không hợp lệ"
+    return ""
+  }
+  const validatePassword = (value) => {
+    if (!value) return "Mật khẩu không được để trống"
+    if (value.length < 6) return "Mật khẩu tối thiểu 6 ký tự"
+    return ""
+  }
+  const validateConfirmPassword = (value) => {
+    if (!value) return "Vui lòng xác nhận mật khẩu"
+    if (value !== matKhau) return "Mật khẩu xác nhận không khớp"
+    return ""
+  }
+  const validateHoTen = (value) => {
+    if (!value.trim()) return "Họ tên không được để trống"
+    return ""
+  }
+  // ... (có thể thêm validate cho ngày sinh, giới tính, ảnh đại diện nếu muốn)
+
+  const handleUsernameChange = (e) => {
+    setTenDangNhap(e.target.value)
+    setUsernameError(validateUsername(e.target.value))
+  }
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value)
+    setEmailError(validateEmail(e.target.value))
+  }
+  const handlePasswordChange = (e) => {
+    setMatKhau(e.target.value)
+    setPasswordError(validatePassword(e.target.value))
+    setConfirmPasswordError(validateConfirmPassword(xacNhanMatKhau))
+  }
+  const handleConfirmPasswordChange = (e) => {
+    setXacNhanMatKhau(e.target.value)
+    setConfirmPasswordError(validateConfirmPassword(e.target.value))
+  }
+  const handleHoTenChange = (e) => {
+    setHoTen(e.target.value)
+    setHoTenError(validateHoTen(e.target.value))
+  }
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
@@ -57,6 +127,40 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    // Kiểm tra lỗi trước khi submit
+    const usernameErr = validateUsername(tenDangNhap)
+    const emailErr = validateEmail(email)
+    const passwordErr = validatePassword(matKhau)
+    const confirmPasswordErr = validateConfirmPassword(xacNhanMatKhau)
+    const hoTenErr = validateHoTen(hoTen)
+    setUsernameError(usernameErr)
+    setEmailError(emailErr)
+    setPasswordError(passwordErr)
+    setConfirmPasswordError(confirmPasswordErr)
+    setHoTenError(hoTenErr)
+    if (usernameErr || emailErr || passwordErr || confirmPasswordErr || hoTenErr) {
+      // Focus vào trường đầu tiên có lỗi
+      if (usernameErr) {
+        document.getElementById("register-username")?.focus()
+      } else if (emailErr) {
+        document.getElementById("register-email")?.focus()
+      } else if (passwordErr) {
+        document.getElementById("register-password")?.focus()
+      } else if (confirmPasswordErr) {
+        document.getElementById("register-confirm-password")?.focus()
+      } else if (hoTenErr) {
+        document.getElementById("register-hoten")?.focus()
+      }
+      toast.error("Vui lòng kiểm tra lại thông tin đăng ký!", {
+        icon: "⚠️",
+        style: {
+          background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+          color: "white",
+        },
+      })
+      setIsLoading(false)
+      return
+    }
     setIsLoading(true)
     try {
       if (!process.env.REACT_APP_API_URL) {
@@ -161,24 +265,6 @@ const Register = () => {
         />
       </div>
 
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        toastStyle={{
-          borderRadius: "16px",
-          backdropFilter: "blur(10px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-        }}
-      />
-
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -245,7 +331,7 @@ const Register = () => {
           )}
         </AnimatePresence>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
               <motion.div
@@ -263,7 +349,7 @@ const Register = () => {
                       <input
                         type="text"
                         value={tenDangNhap}
-                        onChange={(e) => setTenDangNhap(e.target.value)}
+                        onChange={handleUsernameChange}
                         onFocus={() => setFocusedField("username")}
                         onBlur={() => setFocusedField("")}
                         className={`w-full p-4 pl-12 border-0 rounded-2xl bg-white/60 backdrop-blur-sm text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-300 ${
@@ -280,15 +366,18 @@ const Register = () => {
                         }`}
                       />
                     </div>
+                    {usernameError && (
+                      <p className="text-red-500 text-sm mt-1">{usernameError}</p>
+                    )}
                   </div>
 
-                  <div className="space-y-2">
+                  <motion.div variants={itemVariants} className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Mật Khẩu</label>
                     <div className="relative group">
                       <input
                         type={showPassword ? "text" : "password"}
                         value={matKhau}
-                        onChange={(e) => setMatKhau(e.target.value)}
+                        onChange={handlePasswordChange}
                         onFocus={() => setFocusedField("password")}
                         onBlur={() => setFocusedField("")}
                         className={`w-full p-4 pl-12 pr-12 border-0 rounded-2xl bg-white/60 backdrop-blur-sm text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-300 ${
@@ -298,33 +387,53 @@ const Register = () => {
                         }`}
                         placeholder="Nhập mật khẩu"
                         required
+                        id="register-password"
+                        autoComplete="new-password"
                       />
-                      <svg
+                      <EyeIcon
                         className={`w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
                           focusedField === "password" ? "text-emerald-600" : "text-gray-400"
                         }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                        />
-                      </svg>
-                      <motion.button
-                        type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1 rounded-lg hover:bg-white/50"
-                      >
-                        {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                      </motion.button>
+                        style={{ cursor: 'pointer' }}
+                      />
                     </div>
-                  </div>
+                    {/* Password strength bar */}
+                    {matKhau && (
+                      <div className="mt-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex-1 h-2 rounded-full" style={{ background: "#e5e7eb" }}>
+                            <div
+                              style={{
+                                width: `${(passwordStrength.score + 1) * 20}%`,
+                                background: strengthColor[passwordStrength.score],
+                                height: "100%",
+                                borderRadius: 8,
+                                transition: "width 0.3s, background 0.3s"
+                              }}
+                            />
+                          </div>
+                          <span
+                            className="text-xs font-semibold"
+                            style={{ color: strengthColor[passwordStrength.score], minWidth: 60 }}
+                          >
+                            {strengthLabels[passwordStrength.score]}
+                          </span>
+                        </div>
+                        {/* Gợi ý cải thiện nếu yếu */}
+                        {passwordStrength.feedback.suggestions.length > 0 && (
+                          <ul className="text-xs text-yellow-600 mt-1 ml-1 list-disc list-inside">
+                            {passwordStrength.feedback.suggestions.map((s, i) => (
+                              <li key={i}>{s}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                    {passwordError && (
+                      <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+                    )}
+                  </motion.div>
 
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
@@ -332,7 +441,7 @@ const Register = () => {
                       <input
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={handleEmailChange}
                         onFocus={() => setFocusedField("email")}
                         onBlur={() => setFocusedField("")}
                         className={`w-full p-4 pl-12 border-0 rounded-2xl bg-white/60 backdrop-blur-sm text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-300 ${
@@ -349,6 +458,9 @@ const Register = () => {
                         }`}
                       />
                     </div>
+                    {emailError && (
+                      <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -357,7 +469,7 @@ const Register = () => {
                       <input
                         type="text"
                         value={hoTen}
-                        onChange={(e) => setHoTen(e.target.value)}
+                        onChange={handleHoTenChange}
                         onFocus={() => setFocusedField("fullname")}
                         onBlur={() => setFocusedField("")}
                         className={`w-full p-4 pl-12 border-0 rounded-2xl bg-white/60 backdrop-blur-sm text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-300 ${
@@ -384,6 +496,9 @@ const Register = () => {
                         />
                       </svg>
                     </div>
+                    {hoTenError && (
+                      <p className="text-red-500 text-sm mt-1">{hoTenError}</p>
+                    )}
                   </div>
                 </div>
 
@@ -431,6 +546,9 @@ const Register = () => {
                         }`}
                       />
                     </div>
+                    {ngaySinhError && (
+                      <p className="text-red-500 text-sm mt-1">{ngaySinhError}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -468,6 +586,9 @@ const Register = () => {
                         />
                       </svg>
                     </div>
+                    {gioiTinhError && (
+                      <p className="text-red-500 text-sm mt-1">{gioiTinhError}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -512,6 +633,9 @@ const Register = () => {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    {anhDaiDienError && (
+                      <p className="text-red-500 text-sm mt-1">{anhDaiDienError}</p>
+                    )}
                   </div>
                 </div>
 

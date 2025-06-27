@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from "chart.js"
 import { Line, Doughnut } from "react-chartjs-2"
-import { ToastContainer, toast } from "react-toastify"
+import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import {
   ChatBubbleLeftRightIcon,

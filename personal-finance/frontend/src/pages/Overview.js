@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
-import { ToastContainer, toast } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
+import { toast } from "react-toastify"
 import { Bar, Pie, Doughnut, Line } from "react-chartjs-2"
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement } from "chart.js"
 import {
@@ -2126,16 +2125,6 @@ const Overview = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-emerald-50/30 py-8 px-4">
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        theme="colored"
-        toastStyle={{
-          borderRadius: '12px',
-          backdropFilter: 'blur(10px)',
-        }}
-      />
-
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <motion.div
