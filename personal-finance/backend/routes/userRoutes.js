@@ -86,7 +86,9 @@ const authLimiter = rateLimit({
 // Đăng ký
 router.post('/register', authLimiter, upload.single('anhDaiDien'), async (req, res) => {
   try {
-    const { tenDangNhap, matKhau, email, hoTen, ngaySinh, gioiTinh } = req.body;
+    // Đảm bảo đồng bộ trim và lowercase tên đăng nhập
+    const tenDangNhap = req.body.tenDangNhap?.trim().toLowerCase();
+    const { matKhau, email, hoTen, ngaySinh, gioiTinh } = req.body;
     console.log('POST /register:', { tenDangNhap, email, hoTen });
 
     if (!tenDangNhap || !matKhau || !email || !hoTen) {
@@ -142,7 +144,9 @@ router.post('/register', authLimiter, upload.single('anhDaiDien'), async (req, r
 // Đăng nhập
 router.post('/login', authLimiter, async (req, res) => {
   try {
-    const { tenDangNhap, matKhau } = req.body;
+    // Đảm bảo đồng bộ trim và lowercase tên đăng nhập
+    const tenDangNhap = req.body.tenDangNhap?.trim().toLowerCase();
+    const { matKhau } = req.body;
     console.log('POST /login:', { tenDangNhap });
 
     if (!tenDangNhap || !matKhau) {

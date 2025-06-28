@@ -7,6 +7,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const axios = require('axios');
 const { User, Category, Account } = require('./models');
+const passport = require('./passport');
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
@@ -50,6 +52,8 @@ updateSavingGoalStatus();
 updateDebtStatus();
 updateReport();
 
+app.use(passport.initialize());
+
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/transactions', require('./routes/transactionRoutes'));
 app.use('/api/accounts', require('./routes/accountRoutes'));
@@ -61,6 +65,17 @@ app.use('/api/debts', require('./routes/debtRoutes'));
 app.use('/api/investments', require('./routes/investmentRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/overview', require('./routes/overviewRoutes'));
+
+// Route bắt đầu xác thực Google
+app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// Route callback Google
+app.get('/api/auth/google/callback', passport.authenticate('google', { session: false, failureRedirect: '/login?error=google' }), (req, res) => {
+  const user = req.user;
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  // Redirect về frontend kèm token
+  res.redirect(`http://localhost:3000/login?token=${token}`);
+});
 
 io.on('connection', (socket) => {
   console.log('Người dùng kết nối:', socket.id);

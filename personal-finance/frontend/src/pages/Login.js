@@ -1,13 +1,13 @@
 "use client"
 
-import React, { useState, useContext } from "react"
+import React, { useState, useContext, useEffect, useRef } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "react-toastify"
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import zxcvbn from "zxcvbn";
-import { EyeIcon, EyeSlashIcon, UserIcon, LockClosedIcon, ArrowRightIcon } from "@heroicons/react/24/outline"
+import { EyeIcon, EyeSlashIcon, UserIcon, LockClosedIcon, ArrowRightIcon, ArrowPathIcon, XMarkIcon } from "@heroicons/react/24/outline"
 import { AuthContext } from "../context/AuthContext"
 
 const Login = () => {
@@ -22,6 +22,17 @@ const Login = () => {
   const [passwordError, setPasswordError] = useState("");
   const { login } = useContext(AuthContext)
   const navigate = useNavigate()
+  const [captcha, setCaptcha] = useState("");
+  const [captchaInput, setCaptchaInput] = useState("");
+  const captchaRef = useRef(null);
+  const [refreshSpin, setRefreshSpin] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotOTP, setForgotOTP] = useState("");
+  const [forgotNewPass, setForgotNewPass] = useState("");
+  const [forgotConfirmPass, setForgotConfirmPass] = useState("");
 
   // Password strength
   const passwordStrength = zxcvbn(matKhau)
@@ -49,6 +60,26 @@ const Login = () => {
     setPasswordError(validatePassword(e.target.value));
   };
 
+  // Hàm sinh captcha random
+  const generateCaptcha = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let str = "";
+    for (let i = 0; i < 5; i++) str += chars.charAt(Math.floor(Math.random() * chars.length));
+    return str;
+  };
+
+  useEffect(() => {
+    setCaptcha(generateCaptcha());
+  }, []);
+
+  const refreshCaptcha = () => {
+    setCaptcha(generateCaptcha());
+    setCaptchaInput("");
+    captchaRef.current?.focus();
+    setRefreshSpin(true);
+    setTimeout(() => setRefreshSpin(false), 600);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     // Validate trước khi submit
@@ -57,6 +88,17 @@ const Login = () => {
     setUsernameError(userErr);
     setPasswordError(passErr);
     if (userErr || passErr) return;
+    if (captchaInput.trim().toUpperCase() !== captcha) {
+      toast.error("Mã xác thực không đúng!", {
+        icon: "❌",
+        style: {
+          background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+          color: "white",
+        },
+      });
+      refreshCaptcha();
+      return;
+    }
     setIsLoading(true)
     try {
       await login(tenDangNhap, matKhau)
@@ -68,6 +110,12 @@ const Login = () => {
           color: "white",
         },
       })
+      if (rememberMe) {
+        localStorage.setItem('token', localStorage.getItem('token'));
+      } else {
+        sessionStorage.setItem('token', localStorage.getItem('token'));
+        localStorage.removeItem('token');
+      }
       navigate("/dashboard")
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Đăng nhập thất bại"
@@ -83,6 +131,35 @@ const Login = () => {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const error = params.get('error');
+    if (token) {
+      if (rememberMe) {
+        localStorage.setItem('token', token);
+      } else {
+        sessionStorage.setItem('token', token);
+      }
+      toast.success('Đăng nhập Google thành công!', {
+        icon: '🎉',
+        style: {
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          color: 'white',
+        },
+      });
+      navigate('/dashboard');
+    } else if (error) {
+      toast.error('Đăng nhập Google thất bại!', {
+        icon: '❌',
+        style: {
+          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+          color: 'white',
+        },
+      });
+    }
+  }, [navigate, rememberMe]);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -160,6 +237,21 @@ const Login = () => {
               </h2>
               <p className="text-gray-600 mt-2 font-medium">Đăng nhập để tiếp tục quản lý tài chính của bạn</p>
             </motion.div>
+
+            <button
+              type="button"
+              onClick={() => window.location.href = "http://localhost:5000/api/auth/google"}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-white border border-gray-200 shadow hover:bg-gray-50 transition-all font-semibold text-gray-700 mb-6"
+              style={{ boxShadow: '0 2px 8px 0 rgba(66,133,244,0.08)' }}
+            >
+              <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google" className="w-6 h-6" />
+              Đăng nhập với Google
+            </button>
+            <div className="flex items-center my-6">
+              <div className="flex-1 h-px bg-gray-300" />
+              <span className="mx-4 text-gray-400 font-semibold">hoặc</span>
+              <div className="flex-1 h-px bg-gray-300" />
+            </div>
 
             <AnimatePresence>
               {error && (
@@ -297,6 +389,57 @@ const Login = () => {
                 )}
               </motion.div>
 
+              <div className="mb-2">
+                <div className="flex items-center mb-1 gap-2">
+                  <label className="block text-sm font-medium text-gray-700">Mã xác thực</label>
+                  <button
+                    type="button"
+                    onClick={refreshCaptcha}
+                    className="p-1 rounded hover:bg-gray-200 transition"
+                    title="Làm mới mã"
+                    tabIndex={-1}
+                  >
+                    <ArrowPathIcon className={`w-5 h-5 text-emerald-600 transition-transform duration-500 ${refreshSpin ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+                <div className="flex items-center gap-3 w-full">
+                  <span className="font-mono text-base tracking-widest bg-gray-100 px-4 py-1 rounded border border-gray-200 select-none min-w-[90px] text-center">
+                    {captcha}
+                  </span>
+                  <div className="h-5 w-px bg-gray-300 mx-1" />
+                  <input
+                    type="text"
+                    value={captchaInput}
+                    onChange={e => setCaptchaInput(e.target.value)}
+                    ref={captchaRef}
+                    placeholder="Nhập mã"
+                    className="flex-1 p-3 border rounded bg-white/60 placeholder-gray-500 min-w-0"
+                    maxLength={5}
+                    autoComplete="off"
+                  />
+                </div>
+              </div>
+
+              {/* Nhớ mật khẩu + Quên mật khẩu */}
+              <div className="flex items-center justify-between mt-2 mb-6">
+                <label className="flex items-center text-gray-600 text-sm select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    className="mr-2 accent-emerald-600"
+                  />
+                  Nhớ mật khẩu
+                </label>
+                <button
+                  type="button"
+                  className="text-emerald-600 font-semibold hover:underline bg-transparent border-0 p-0 text-sm"
+                  onClick={() => setShowForgot(true)}
+                >
+                  Quên mật khẩu?
+                </button>
+              </div>
+
               <motion.button
                 variants={itemVariants}
                 whileHover={{ scale: 1.02, y: -2 }}
@@ -340,21 +483,89 @@ const Login = () => {
               </motion.button>
             </form>
 
-            <motion.div variants={itemVariants} className="mt-8 text-center">
-              <p className="text-gray-600 font-medium">
-                Chưa có tài khoản?{" "}
-                <Link
-                  to="/register"
-                  className="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline transition-all duration-200 relative group"
-                >
-                  Đăng Ký ngay
-                  <motion.span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-600 group-hover:w-full transition-all duration-300" />
-                </Link>
-              </p>
-            </motion.div>
+            {/* Đăng ký ngay */}
+            <div className="mt-8 text-center text-gray-600">
+              Chưa có tài khoản?{' '}
+              <Link to="/register" className="text-emerald-600 font-semibold hover:underline">
+                Đăng ký ngay
+              </Link>
+            </div>
           </>
         )}
       </motion.div>
+
+      {/* Popup Quên mật khẩu */}
+      {showForgot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm relative animate-fadeIn">
+            <button className="absolute top-3 right-3 p-1 rounded hover:bg-gray-100" onClick={() => { setShowForgot(false); setForgotStep(1); setForgotEmail(""); setForgotOTP(""); setForgotNewPass(""); setForgotConfirmPass(""); }}>
+              <XMarkIcon className="w-6 h-6 text-gray-500" />
+            </button>
+            <h3 className="text-xl font-bold text-center mb-4">Quên mật khẩu</h3>
+            {forgotStep === 1 && (
+              <>
+                <label className="block text-sm font-medium mb-2">Nhập email đã đăng ký</label>
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={e => setForgotEmail(e.target.value)}
+                  className="w-full p-3 border rounded-xl bg-gray-50 mb-4"
+                  placeholder="Email của bạn"
+                  autoFocus
+                />
+                <button className="w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition" onClick={() => setForgotStep(2)}>
+                  Gửi mã xác thực
+                </button>
+              </>
+            )}
+            {forgotStep === 2 && (
+              <>
+                <label className="block text-sm font-medium mb-2">Nhập mã xác thực đã gửi về email</label>
+                <input
+                  type="text"
+                  value={forgotOTP}
+                  onChange={e => setForgotOTP(e.target.value)}
+                  className="w-full p-3 border rounded-xl bg-gray-50 mb-4"
+                  placeholder="Mã xác thực"
+                  autoFocus
+                />
+                <button className="w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition mb-2" onClick={() => setForgotStep(3)}>
+                  Xác nhận mã
+                </button>
+                <button className="w-full py-2 rounded-xl bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition text-sm" onClick={() => setForgotStep(1)}>
+                  Quay lại
+                </button>
+              </>
+            )}
+            {forgotStep === 3 && (
+              <>
+                <label className="block text-sm font-medium mb-2">Nhập mật khẩu mới</label>
+                <input
+                  type="password"
+                  value={forgotNewPass}
+                  onChange={e => setForgotNewPass(e.target.value)}
+                  className="w-full p-3 border rounded-xl bg-gray-50 mb-3"
+                  placeholder="Mật khẩu mới"
+                  autoFocus
+                />
+                <input
+                  type="password"
+                  value={forgotConfirmPass}
+                  onChange={e => setForgotConfirmPass(e.target.value)}
+                  className="w-full p-3 border rounded-xl bg-gray-50 mb-4"
+                  placeholder="Xác nhận mật khẩu mới"
+                />
+                <button className="w-full py-3 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition mb-2">
+                  Đặt lại mật khẩu
+                </button>
+                <button className="w-full py-2 rounded-xl bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition text-sm" onClick={() => setForgotStep(2)}>
+                  Quay lại
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

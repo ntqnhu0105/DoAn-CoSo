@@ -435,6 +435,39 @@ const Register = () => {
                     )}
                   </motion.div>
 
+                  {/* Thêm input xác nhận mật khẩu */}
+                  <motion.div variants={itemVariants} className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Xác nhận mật khẩu</label>
+                    <div className="relative group">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={xacNhanMatKhau}
+                        onChange={handleConfirmPasswordChange}
+                        onFocus={() => setFocusedField("confirm-password")}
+                        onBlur={() => setFocusedField("")}
+                        className={`w-full p-4 pl-12 pr-12 border-0 rounded-2xl bg-white/60 backdrop-blur-sm text-gray-800 placeholder-gray-500 shadow-sm transition-all duration-300 ${
+                          focusedField === "confirm-password"
+                            ? "ring-4 ring-emerald-500/20 shadow-lg bg-white/80 transform scale-[1.02]"
+                            : "hover:bg-white/70 hover:shadow-md"
+                        }`}
+                        placeholder="Nhập lại mật khẩu"
+                        required
+                        id="register-confirm-password"
+                        autoComplete="new-password"
+                      />
+                      <EyeSlashIcon
+                        className={`w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
+                          focusedField === "confirm-password" ? "text-emerald-600" : "text-gray-400"
+                        }`}
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </div>
+                    {confirmPasswordError && (
+                      <p className="text-red-500 text-sm mt-1">{confirmPasswordError}</p>
+                    )}
+                  </motion.div>
+
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                     <div className="relative group">
