@@ -387,6 +387,10 @@ const notificationSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  quanTrong: {
+    type: Boolean,
+    default: false,
+  },
   loai: {
     type: String,
     enum: ['Nhắc nhở', 'Cảnh báo', 'Cập nhật'],
@@ -434,11 +438,68 @@ const investmentSchema = new mongoose.Schema({
   { timestamps: true }
 );
 
+// Schema cho Nhắc Nhở (NhanNho)
+const reminderSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Người dùng là bắt buộc'],
+  },
+  // Liên kết với các loại đối tượng khác nhau
+  goalId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'SavingGoal',
+  },
+  debtId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Debt',
+  },
+  investmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Investment',
+  },
+  ngayNhacNho: {
+    type: Date,
+    required: [true, 'Ngày nhắc nhở là bắt buộc'],
+  },
+  noiDung: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Nội dung không được vượt quá 200 ký tự'],
+  },
+  trangThai: {
+    type: String,
+    enum: ['Chưa gửi', 'Đã gửi', 'Đã hủy'],
+    default: 'Chưa gửi',
+  },
+  ngayTao: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+// Validation để đảm bảo chỉ có một loại đối tượng được liên kết
+reminderSchema.pre('save', function(next) {
+  const hasSavingGoal = !!this.goalId;
+  const hasDebt = !!this.debtId;
+  const hasInvestment = !!this.investmentId;
+  
+  const count = [hasSavingGoal, hasDebt, hasInvestment].filter(Boolean).length;
+  
+  if (count !== 1) {
+    return next(new Error('Nhắc nhở phải liên kết với đúng một đối tượng (Mục tiêu tiết kiệm, Khoản nợ, hoặc Đầu tư)'));
+  }
+  
+  next();
+});
+
 // Tạo các chỉ số (Index)
 transactionSchema.index({ maNguoiDung: 1, ngayGiaoDich: 1 });
 accountSchema.index({ maNguoiDung: 1 });
 budgetSchema.index({ maNguoiDung: 1, maDanhMuc: 1 });
 reportSchema.index({ maNguoiDung: 1 });
+reminderSchema.index({ userId: 1, ngayNhacNho: 1 });
+reminderSchema.index({ trangThai: 1, ngayNhacNho: 1 });
 
 // Tạo các model
 const User = mongoose.model('User', userSchema);
@@ -451,6 +512,7 @@ const SavingGoal = mongoose.model('SavingGoal', savingGoalSchema);
 const Debt = mongoose.model('Debt', debtSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
 const Investment = mongoose.model('Investment', investmentSchema);
+const Reminder = mongoose.model('Reminder', reminderSchema);
 
 module.exports = {
   User,
@@ -463,4 +525,5 @@ module.exports = {
   Debt,
   Notification,
   Investment,
+  Reminder,
 };

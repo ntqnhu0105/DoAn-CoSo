@@ -642,7 +642,7 @@ const TransactionList = ({ transactions, setTransactions, loading, onEdit, onDel
                 className="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors duration-200 flex items-center space-x-2"
               >
                 <ArrowDownTrayIcon className="h-5 w-5" />
-                <span className="text-sm font-medium">Xuất</span>
+                {/* <span className="text-sm font-medium">Xuất</span> */}
               </Menu.Button>
 
               <Transition

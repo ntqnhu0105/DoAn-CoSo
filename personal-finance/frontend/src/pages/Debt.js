@@ -57,6 +57,9 @@ const DebtManagement = () => {
   const [reminderNote, setReminderNote] = useState('');
   const [selectedDebt, setSelectedDebt] = useState(null);
   const [draggedDebt, setDraggedDebt] = useState(null);
+  const [reminders, setReminders] = useState([]);
+  const [showRemindersList, setShowRemindersList] = useState(false);
+  const [editingReminder, setEditingReminder] = useState(null);
 
   const userId = localStorage.getItem('userId');
   const navigate = useNavigate();
@@ -135,6 +138,22 @@ const DebtManagement = () => {
       }
     };
     if (userId) fetchData();
+  }, [userId]);
+
+  // Lấy danh sách nhắc nhở
+  useEffect(() => {
+    const fetchReminders = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/reminders/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setReminders(res.data);
+      } catch (err) {
+        console.error('Lỗi khi tải danh sách nhắc nhở:', err);
+      }
+    };
+    if (userId) fetchReminders();
   }, [userId]);
 
   // Thêm hoặc cập nhật khoản nợ
@@ -392,6 +411,76 @@ const DebtManagement = () => {
     }
   };
 
+  // Hàm xóa nhắc nhở
+  const handleDeleteReminder = async (reminderId) => {
+    if (!window.confirm('Bạn có chắc muốn xóa nhắc nhở này?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${process.env.REACT_APP_API_URL}/reminders/${reminderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { userId }
+      });
+      setReminders(reminders.filter(reminder => reminder._id !== reminderId));
+      toast.success('Đã xóa nhắc nhở thành công!');
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Lỗi khi xóa nhắc nhở';
+      toast.error(errorMessage);
+    }
+  };
+
+  // Hàm chỉnh sửa nhắc nhở
+  const handleEditReminder = async (e) => {
+    e.preventDefault();
+    if (!editingReminder || !reminderDate) {
+      toast.error('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    const reminderDateTime = new Date(reminderDate);
+    if (isNaN(reminderDateTime.getTime())) {
+      toast.error('Ngày nhắc nhở không hợp lệ');
+      return;
+    }
+
+    if (reminderDateTime <= new Date()) {
+      toast.error('Ngày nhắc nhở phải lớn hơn thời gian hiện tại');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(`${process.env.REACT_APP_API_URL}/reminders/${editingReminder._id}`, {
+        userId,
+        date: reminderDate,
+        note: reminderNote
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setReminders(reminders.map(reminder => 
+        reminder._id === editingReminder._id ? response.data : reminder
+      ));
+      
+      toast.success('Đã cập nhật nhắc nhở thành công!');
+      setEditingReminder(null);
+      setReminderDate('');
+      setReminderNote('');
+      setShowReminderModal(false);
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Lỗi khi cập nhật nhắc nhở';
+      toast.error(errorMessage);
+    }
+  };
+
+  // Hàm mở modal chỉnh sửa nhắc nhở
+  const openEditReminderModal = (reminder) => {
+    setEditingReminder(reminder);
+    setReminderDate(new Date(reminder.ngayNhacNho).toISOString().slice(0, 16));
+    setReminderNote(reminder.noiDung || '');
+    setShowReminderModal(true);
+  };
+
   // Mở modal thêm khoản nợ
   const openAddModal = () => {
     setModalType('add');
@@ -452,6 +541,7 @@ const DebtManagement = () => {
     setTrangThai('Hoạt động');
     setSoTienTra('');
     setError('');
+    setEditingReminder(null);
   };
 
   // Hàm sắp xếp
@@ -585,32 +675,45 @@ const DebtManagement = () => {
 
   // Hàm thêm nhắc nhở
   const handleAddReminder = async () => {
-    if (!reminderDate || !selectedDebt) return;
+    if (!reminderDate || !selectedDebt) {
+      toast.error('Vui lòng nhập đầy đủ thông tin nhắc nhở');
+      return;
+    }
+
+    const reminderDateTime = new Date(reminderDate);
+    if (isNaN(reminderDateTime.getTime())) {
+      toast.error('Ngày nhắc nhở không hợp lệ');
+      return;
+    }
+
+    if (reminderDateTime <= new Date()) {
+      toast.error('Ngày nhắc nhở phải lớn hơn thời gian hiện tại');
+      return;
+    }
 
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/reminders`, {
+      const token = localStorage.getItem('token');
+      // Gọi API tạo nhắc nhở
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/reminders`, {
         userId,
         debtId: selectedDebt._id,
         date: reminderDate,
-        note: reminderNote
+        note: reminderNote || `Nhắc nhở về khoản nợ "${selectedDebt.soTien.toLocaleString()} VNĐ"`
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Đã thêm nhắc nhở', {
-        style: {
-          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-          color: 'white',
-        },
-      });
+      
+      // Cập nhật danh sách reminders
+      setReminders([...reminders, response.data]);
+      
+      toast.success('Đã thêm nhắc nhở thành công!');
       setShowReminderModal(false);
       setReminderDate('');
       setReminderNote('');
       setSelectedDebt(null);
     } catch (err) {
-      toast.error('Lỗi khi thêm nhắc nhở', {
-        style: {
-          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-          color: 'white',
-        },
-      });
+      const errorMessage = err.response?.data?.message || 'Lỗi khi thêm nhắc nhở';
+      toast.error(errorMessage);
     }
   };
 
@@ -712,47 +815,48 @@ const DebtManagement = () => {
         </motion.div>
 
         {/* Tổng quan */}
-        <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">Tổng nợ</h3>
-              <p className="text-2xl font-bold text-blue-600">
-                {stats.totalDebt.toLocaleString()} VNĐ
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Còn lại: {stats.remainingDebt.toLocaleString()} VNĐ
-              </p>
+        <motion.div variants={itemVariants} className="mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Tổng nợ */}
+            <div className="flex items-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow p-5 hover:scale-105 transition">
+              <span className="text-4xl mr-4">💳</span>
+              <div>
+                <div className="text-sm text-gray-500 font-medium">Tổng nợ</div>
+                <div className="text-2xl font-bold text-blue-600">{stats.totalDebt.toLocaleString()} VNĐ</div>
+                <div className="text-sm text-gray-500 mt-1">Còn lại: {stats.remainingDebt.toLocaleString()} VNĐ</div>
+              </div>
             </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">Đã trả</h3>
-              <p className="text-2xl font-bold text-green-600">
-                {stats.totalPaid.toLocaleString()} VNĐ
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Tỷ lệ: {stats.totalDebt ? ((stats.totalPaid / (stats.totalDebt + stats.totalInterest)) * 100).toFixed(1) : 0}%
-              </p>
+            {/* Đã trả */}
+            <div className="flex items-center bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow p-5 hover:scale-105 transition">
+              <span className="text-4xl mr-4">💸</span>
+              <div>
+                <div className="text-sm text-gray-500 font-medium">Đã trả</div>
+                <div className="text-2xl font-bold text-green-600">{stats.totalPaid.toLocaleString()} VNĐ</div>
+                <div className="text-sm text-gray-500 mt-1">Tỷ lệ: {stats.totalDebt ? ((stats.totalPaid / (stats.totalDebt + stats.totalInterest)) * 100).toFixed(1) : 0}%</div>
+              </div>
             </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">Tổng lãi</h3>
-              <p className="text-2xl font-bold text-purple-600">
-                {stats.totalInterest.toLocaleString()} VNĐ
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Quá hạn: {stats.overdueDebts} khoản
-              </p>
+            {/* Tổng lãi */}
+            <div className="flex items-center bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow p-5 hover:scale-105 transition">
+              <span className="text-4xl mr-4">📅</span>
+              <div>
+                <div className="text-sm text-gray-500 font-medium">Tổng lãi</div>
+                <div className="text-2xl font-bold text-purple-600">{stats.totalInterest.toLocaleString()} VNĐ</div>
+                <div className="text-sm text-gray-500 mt-1">Quá hạn: {stats.overdueDebts} khoản</div>
+              </div>
             </div>
           </div>
         </motion.div>
 
         {/* Bộ lọc và tìm kiếm */}
-        <motion.div variants={itemVariants} className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="flex items-center space-x-4">
-              <label className="text-gray-700 font-medium whitespace-nowrap">Lọc:</label>
+        <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow p-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-wrap">
+            {/* Lọc */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-700 text-sm font-medium">Lọc:</span>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                className="p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 bg-gray-50"
               >
                 <option value="Tất cả">Tất cả</option>
                 <option value="Hoạt động">Hoạt động</option>
@@ -760,60 +864,62 @@ const DebtManagement = () => {
                 <option value="Quá hạn">Quá hạn</option>
               </select>
             </div>
-            <div className="flex items-center space-x-4">
-              <label className="text-gray-700 font-medium whitespace-nowrap">Sắp xếp:</label>
+            {/* Sắp xếp */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-700 text-sm font-medium">Sắp xếp:</span>
               <select
                 value={sortConfig.key}
                 onChange={(e) => handleSort(e.target.value)}
-                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                className="p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 bg-gray-50"
               >
                 <option value="ngayBatDau">Ngày bắt đầu</option>
                 <option value="soTien">Số tiền</option>
                 <option value="soTienDaTra">Đã trả</option>
                 <option value="trangThai">Trạng thái</option>
               </select>
-              <motion.button
+              <button
                 onClick={() => handleSort(sortConfig.key)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+                aria-label="Đổi chiều sắp xếp"
               >
-                {sortConfig.direction === 'asc' ? (
-                  <ArrowUpIcon className="h-5 w-5" />
-                ) : (
-                  <ArrowDownIcon className="h-5 w-5" />
-                )}
-              </motion.button>
+                {sortConfig.direction === 'asc' ? <ArrowUpIcon className="h-5 w-5" /> : <ArrowDownIcon className="h-5 w-5" />}
+              </button>
             </div>
-            <div className="relative">
+            {/* Tìm kiếm */}
+            <div className="relative w-full max-w-[200px]">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Tìm kiếm khoản nợ..."
-                className="w-full p-2 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Tìm kiếm..."
+                className="w-full p-2 pl-10 rounded-lg border focus:ring-2 focus:ring-blue-500 bg-gray-50 truncate"
+                style={{ textOverflow: 'ellipsis' }}
               />
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             </div>
-            <div className="flex items-center space-x-4">
-              <motion.button
+            {/* Nút nhóm */}
+            <div className="flex gap-2 flex-wrap">
+              <button
                 onClick={() => setShowStats(!showStats)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gray-50 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-100 transition duration-200 flex items-center space-x-2 border border-gray-200 flex-1"
+                className="bg-gray-50 text-gray-700 px-4 py-2 rounded-lg border hover:bg-gray-100 flex items-center gap-2 shadow-sm"
               >
                 <ChartPieIcon className="h-5 w-5" />
                 <span>{showStats ? 'Ẩn Thống kê' : 'Thống kê'}</span>
-              </motion.button>
-              <motion.button
+              </button>
+              <button
+                onClick={() => setShowRemindersList(!showRemindersList)}
+                className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-lg border border-yellow-200 hover:bg-yellow-100 flex items-center gap-2 shadow-sm"
+              >
+                <BellIcon className="h-5 w-5" />
+                <span>Nhắc nhở ({reminders.length})</span>
+              </button>
+              <button
                 onClick={openAddModal}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center space-x-2 flex-1"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-sm"
               >
                 <PlusIcon className="h-5 w-5" />
                 <span>Khoản nợ</span>
-              </motion.button>
+              </button>
             </div>
           </div>
         </motion.div>
@@ -937,6 +1043,134 @@ const DebtManagement = () => {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Danh sách nhắc nhở */}
+        <AnimatePresence>
+          {showRemindersList && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-white rounded-2xl shadow-lg p-6 mb-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl">
+                    <BellIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">Danh sách nhắc nhở</h3>
+                    <p className="text-sm text-gray-500">Quản lý các nhắc nhở cho khoản nợ</p>
+                  </div>
+                </div>
+              </div>
+
+              {reminders.length === 0 ? (
+                <div className="text-center py-12">
+                  <BellIcon className="h-12 w-12 text-gray-300 mx-auto mb-4 animate-bounce" />
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Chưa có nhắc nhở nào</h3>
+                  <p className="text-gray-500">Hãy thêm nhắc nhở cho khoản nợ của bạn</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {reminders.map((reminder) => {
+                    const now = new Date();
+                    const remindTime = new Date(reminder.ngayNhacNho);
+                    const msLeft = remindTime - now;
+                    const daysLeft = Math.floor(msLeft / (1000 * 60 * 60 * 24));
+                    const hoursLeft = Math.floor((msLeft / (1000 * 60 * 60)) % 24);
+                    const minutesLeft = Math.floor((msLeft / (1000 * 60)) % 60);
+                    let timeLeftStr = '';
+                    if (msLeft > 0) {
+                      if (daysLeft > 0) timeLeftStr = `Còn ${daysLeft} ngày`;
+                      else if (hoursLeft > 0) timeLeftStr = `Còn ${hoursLeft} giờ`;
+                      else timeLeftStr = `Còn ${minutesLeft} phút`;
+                    } else {
+                      timeLeftStr = 'Đã đến hạn';
+                    }
+                    return (
+                      <motion.div
+                        key={reminder._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.03, boxShadow: '0 4px 24px rgba(255,193,7,0.15)' }}
+                        className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-5 border border-yellow-200 shadow-lg transition-all duration-300"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <BellIcon className="h-6 w-6 text-yellow-500 animate-bounce" />
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-md transition-all duration-200 ${
+                              reminder.trangThai === 'Chưa gửi'
+                                ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white'
+                                : reminder.trangThai === 'Đã gửi'
+                                ? 'bg-gradient-to-r from-green-400 to-green-600 text-white'
+                                : 'bg-gradient-to-r from-gray-300 to-gray-500 text-white'
+                            }`}>
+                              {reminder.trangThai}
+                            </span>
+                            <span className="ml-2 text-xs text-gray-500 font-medium">{timeLeftStr}</span>
+                          </div>
+                          <div className="flex space-x-2">
+                            <motion.button
+                              onClick={() => openEditReminderModal(reminder)}
+                              whileHover={{ scale: 1.15 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                              title="Chỉnh sửa nhắc nhở"
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </motion.button>
+                            <motion.button
+                              onClick={() => handleDeleteReminder(reminder._id)}
+                              whileHover={{ scale: 1.15 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                              title="Xóa nhắc nhở"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </motion.button>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 mb-1 flex items-center">
+                            <BanknotesIcon className="h-4 w-4 mr-1 text-yellow-600" />
+                            {reminder.debtId ? `Khoản nợ ${reminder.debtId.soTien.toLocaleString()} VNĐ` : 'Khoản nợ không tồn tại'}
+                          </h4>
+                          <p className="text-gray-600 mb-2">{reminder.noiDung}</p>
+                          <div className="flex items-center text-xs text-gray-500 mb-2">
+                            <CalendarIcon className="h-4 w-4 mr-1" />
+                            {new Date(reminder.ngayNhacNho).toLocaleString()}
+                            <span className="ml-2">•</span>
+                            <ClockIcon className="h-4 w-4 mr-1" />
+                            {new Date(reminder.ngayTao).toLocaleDateString()}
+                          </div>
+                          {reminder.debtId && (
+                            <div className="mt-2 p-2 bg-white/50 rounded-lg">
+                              <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Đã trả:</span>
+                                <span className="font-semibold text-gray-800">
+                                  {reminder.debtId.soTienDaTra.toLocaleString()} / {reminder.debtId.soTien.toLocaleString()} VNĐ
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${Math.min((reminder.debtId.soTienDaTra / reminder.debtId.soTien) * 100, 100)}%` }}
+                                  transition={{ duration: 1, ease: "easeOut" }}
+                                  className="bg-gradient-to-r from-yellow-500 to-orange-600 h-2 rounded-full"
+                                ></motion.div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1420,7 +1654,7 @@ const DebtManagement = () => {
                         <BellIcon className="w-6 h-6 text-white" />
                       </div>
                       <h3 className="text-xl font-semibold text-gray-900">
-                        Thêm Nhắc Nhở
+                        {editingReminder ? "Chỉnh Sửa Nhắc Nhở" : "Thêm Nhắc Nhở"}
                       </h3>
                     </div>
                     <motion.button
@@ -1429,6 +1663,7 @@ const DebtManagement = () => {
                         setReminderDate('');
                         setReminderNote('');
                         setSelectedDebt(null);
+                        setEditingReminder(null);
                       }}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -1439,7 +1674,7 @@ const DebtManagement = () => {
                   </div>
                 </div>
 
-                <form onSubmit={handleAddReminder} className="p-6 space-y-6">
+                <form onSubmit={editingReminder ? handleEditReminder : handleAddReminder} className="p-6 space-y-6">
                   <div className="space-y-6">
                     {/* Ngày nhắc nhở */}
                     <div>
@@ -1486,6 +1721,7 @@ const DebtManagement = () => {
                         setReminderDate('');
                         setReminderNote('');
                         setSelectedDebt(null);
+                        setEditingReminder(null);
                       }}
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
@@ -1502,7 +1738,7 @@ const DebtManagement = () => {
                       className="flex-1 px-6 py-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-3 font-semibold text-lg hover:from-emerald-600 hover:to-blue-700"
                     >
                       <BellIcon className="w-5 h-5" />
-                      <span>Thêm Nhắc Nhở</span>
+                      <span>{editingReminder ? "Cập Nhật Nhắc Nhở" : "Thêm Nhắc Nhở"}</span>
                     </motion.button>
                   </div>
                 </form>

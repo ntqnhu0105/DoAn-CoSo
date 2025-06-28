@@ -47,10 +47,13 @@ const updateBudgetStatus = require('./cron/updateBudgetStatus');
 const updateSavingGoalStatus = require('./cron/updateSavingGoalStatus');
 const updateDebtStatus = require('./cron/updateDebtStatus');
 const { updateReport } = require('./cron/updateReport');
+const { startReminderCheck } = require('./cron/checkReminders');
+
 updateBudgetStatus();
 updateSavingGoalStatus();
 updateDebtStatus();
 updateReport();
+startReminderCheck();
 
 app.use(passport.initialize());
 
@@ -61,6 +64,7 @@ app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/budgets', require('./routes/budgetRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/saving-goals', require('./routes/savingGoalRoutes'));
+app.use('/api/reminders', require('./routes/reminderRoutes'));
 app.use('/api/debts', require('./routes/debtRoutes'));
 app.use('/api/investments', require('./routes/investmentRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));

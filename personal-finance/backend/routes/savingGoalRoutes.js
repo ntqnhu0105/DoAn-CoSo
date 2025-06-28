@@ -26,6 +26,48 @@ router.post('/', async (req, res) => {
   session.startTransaction();
   try {
     const { userId, tenMucTieu, soTienMucTieu, soTienHienTai, hanChot, ghiChu, trangThai } = req.body;
+    
+    // Fix: Validate required fields
+    if (!userId || !tenMucTieu || !soTienMucTieu || !hanChot) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin bắt buộc' });
+    }
+    
+    // Fix: Validate field lengths
+    if (tenMucTieu.length > 100) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Tên mục tiêu không được vượt quá 100 ký tự' });
+    }
+    
+    if (ghiChu && ghiChu.length > 200) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Ghi chú không được vượt quá 200 ký tự' });
+    }
+    
+    // Fix: Validate numeric values
+    if (isNaN(soTienMucTieu) || soTienMucTieu <= 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Số tiền mục tiêu phải là số dương hợp lệ' });
+    }
+    
+    if (soTienHienTai && (isNaN(soTienHienTai) || soTienHienTai < 0)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Số tiền hiện tại không được âm' });
+    }
+    
+    // Fix: Validate date
+    const hanChotDate = new Date(hanChot);
+    if (isNaN(hanChotDate.getTime())) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Hạn chót phải là ngày hợp lệ' });
+    }
+    
     const user = await User.findById(userId).session(session);
     if (!user) {
       await session.abortTransaction();
@@ -60,6 +102,41 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { userId, tenMucTieu, soTienMucTieu, soTienHienTai, hanChot, ghiChu, trangThai } = req.body;
+    
+    // Fix: Validate input data
+    if (tenMucTieu && tenMucTieu.length > 100) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Tên mục tiêu không được vượt quá 100 ký tự' });
+    }
+    
+    if (ghiChu && ghiChu.length > 200) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Ghi chú không được vượt quá 200 ký tự' });
+    }
+    
+    if (soTienMucTieu !== undefined && (isNaN(soTienMucTieu) || soTienMucTieu < 0)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Số tiền mục tiêu phải là số dương hợp lệ' });
+    }
+    
+    if (soTienHienTai !== undefined && (isNaN(soTienHienTai) || soTienHienTai < 0)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: 'Số tiền hiện tại không được âm' });
+    }
+    
+    if (hanChot) {
+      const hanChotDate = new Date(hanChot);
+      if (isNaN(hanChotDate.getTime())) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ message: 'Hạn chót phải là ngày hợp lệ' });
+      }
+    }
+    
     const savingGoal = await SavingGoal.findById(id).session(session);
     if (!savingGoal) {
       await session.abortTransaction();
@@ -71,12 +148,15 @@ router.put('/:id', async (req, res) => {
       session.endSession();
       return res.status(403).json({ message: 'Bạn không có quyền chỉnh sửa mục tiêu này' });
     }
-    savingGoal.tenMucTieu = tenMucTieu || savingGoal.tenMucTieu;
-    savingGoal.soTienMucTieu = soTienMucTieu || savingGoal.soTienMucTieu;
-    savingGoal.soTienHienTai = soTienHienTai !== undefined ? soTienHienTai : savingGoal.soTienHienTai;
-    savingGoal.hanChot = hanChot || savingGoal.hanChot;
-    savingGoal.ghiChu = ghiChu !== undefined ? ghiChu : savingGoal.ghiChu;
-    savingGoal.trangThai = trangThai || savingGoal.trangThai;
+    
+    // Fix: Properly handle falsy values
+    if (tenMucTieu !== undefined) savingGoal.tenMucTieu = tenMucTieu;
+    if (soTienMucTieu !== undefined) savingGoal.soTienMucTieu = soTienMucTieu;
+    if (soTienHienTai !== undefined) savingGoal.soTienHienTai = soTienHienTai;
+    if (hanChot !== undefined) savingGoal.hanChot = hanChot;
+    if (ghiChu !== undefined) savingGoal.ghiChu = ghiChu;
+    if (trangThai !== undefined) savingGoal.trangThai = trangThai;
+    
     await savingGoal.save({ session });
     await session.commitTransaction();
     session.endSession();

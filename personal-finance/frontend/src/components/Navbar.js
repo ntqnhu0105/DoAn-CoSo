@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { toast } from "react-toastify"
 import axios from "axios"
@@ -68,19 +68,17 @@ const Navbar = () => {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false)
   const [showBulkActions, setShowBulkActions] = useState(false)
   const tickerRef = useRef(null)
-  const [soundSettings, setSoundSettings] = useState({
-    filterFrequency: 1000,
-    filterQ: 10,
-    lfoFrequency: 5,
-    lfoGain: 50,
-    volume: 0.5,
-    duration: 0.5,
-    delayTime: 0.3,
-    delayFeedback: 0.3,
-    reverbTime: 2.0,
-    distortionAmount: 20,
-    compressorThreshold: -24,
-    compressorRatio: 12
+  const styleSheetRef = useRef(null)
+  const [soundSettings, setSoundSettings] = useState(() => {
+    const savedSettings = localStorage.getItem('soundSettings');
+    return savedSettings ? JSON.parse(savedSettings) : {
+      duration: 0.5,
+      delayTime: 0.3,
+      delayFeedback: 0.3,
+      reverbTime: 2.0,
+      distortionAmount: 20,
+      enabled: true // Thêm tùy chọn bật/tắt âm thanh
+    };
   })
   const [showSoundSettings, setShowSoundSettings] = useState(false)
 
@@ -92,52 +90,77 @@ const Navbar = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
+  // Cleanup function for AudioContext
+  const cleanupAudioContext = useCallback(() => {
+    if (audioContext) {
+      audioContext.close().catch(console.error);
+      setAudioContext(null);
+    }
+  }, [audioContext]);
+
+  // Cleanup function for style sheet
+  const cleanupStyleSheet = useCallback(() => {
+    if (styleSheetRef.current && document.head.contains(styleSheetRef.current)) {
+      document.head.removeChild(styleSheetRef.current);
+      styleSheetRef.current = null;
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanupAudioContext();
+      cleanupStyleSheet();
+    };
+  }, [cleanupAudioContext, cleanupStyleSheet]);
+
   useEffect(() => {
     if (location.pathname === "/" || location.pathname === "/register") return
     if (!userId) navigate("/")
   }, [userId, navigate, location.pathname])
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!userId) return
-      setLoading(true)
-      try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/notifications/${userId}`)
-        setNotifications(res.data)
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Lỗi khi tải thông báo")
-      } finally {
-        setLoading(false)
-      }
+  const fetchNotifications = useCallback(async () => {
+    if (!userId) return
+    setLoading(true)
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/notifications/${userId}`)
+      setNotifications(res.data)
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Lỗi khi tải thông báo")
+    } finally {
+      setLoading(false)
     }
-    fetchNotifications()
   }, [userId])
 
-  const vibrateOnNotification = () => {
+  useEffect(() => {
+    fetchNotifications()
+  }, [fetchNotifications])
+
+  const vibrateOnNotification = useCallback(() => {
     if ("vibrate" in navigator) {
       navigator.vibrate([200, 100, 200]); // Pattern: vibrate, pause, vibrate
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (notifications.length > 0 && !notifications[0].daDoc) {
       vibrateOnNotification();
     }
-  }, [notifications]);
+  }, [notifications, vibrateOnNotification]);
 
-  const handleMarkAsRead = async (id) => {
+  const handleMarkAsRead = useCallback(async (id) => {
     try {
       await axios.put(`${process.env.REACT_APP_API_URL}/notifications/${id}/read`, { userId })
-      setNotifications(notifications.map((notif) => 
+      setNotifications(prev => prev.map((notif) => 
         (notif._id === id ? { ...notif, daDoc: true } : notif)
       ))
       toast.success("Đánh dấu thông báo đã đọc!")
     } catch (err) {
       toast.error(err.response?.data?.message || "Lỗi khi đánh dấu thông báo")
     }
-  }
+  }, [userId])
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem("userId")
     localStorage.removeItem("userName")
     localStorage.removeItem("email")
@@ -147,7 +170,7 @@ const Navbar = () => {
     localStorage.removeItem("token")
     navigate("/")
     toast.success("Đăng xuất thành công!")
-  }
+  }, [navigate])
 
   const unreadCount = notifications.filter((notif) => !notif.daDoc).length
 
@@ -231,39 +254,22 @@ const Navbar = () => {
   };
 
   // Hàm phát âm thanh thông báo
-  const playNotificationSound = () => {
-    if (!audioContext || !hasInteracted) return;
-
+  const playNotificationSound = useCallback(() => {
+    if (!audioContext || !hasInteracted || !soundSettings.enabled) return;
     try {
-      // Tạo các node cơ bản
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      const filter = audioContext.createBiquadFilter();
-      const lfo = audioContext.createOscillator();
-      const lfoGain = audioContext.createGain();
-
-      // Tạo các node hiệu ứng
       const delay = audioContext.createDelay();
       const delayGain = audioContext.createGain();
       const reverb = audioContext.createConvolver();
       const distortion = audioContext.createWaveShaper();
-      const compressor = audioContext.createDynamicsCompressor();
+      // Không còn compressor
 
-      // Cấu hình bộ lọc
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(soundSettings.filterFrequency, audioContext.currentTime);
-      filter.Q.setValueAtTime(soundSettings.filterQ, audioContext.currentTime);
-
-      // Cấu hình LFO
-      lfo.type = 'sine';
-      lfo.frequency.setValueAtTime(soundSettings.lfoFrequency, audioContext.currentTime);
-      lfoGain.gain.setValueAtTime(soundSettings.lfoGain, audioContext.currentTime);
-
-      // Cấu hình Delay
+      // Delay
       delay.delayTime.setValueAtTime(soundSettings.delayTime, audioContext.currentTime);
       delayGain.gain.setValueAtTime(soundSettings.delayFeedback, audioContext.currentTime);
 
-      // Cấu hình Reverb
+      // Reverb
       const reverbBuffer = audioContext.createBuffer(2, audioContext.sampleRate * soundSettings.reverbTime, audioContext.sampleRate);
       for (let channel = 0; channel < 2; channel++) {
         const channelData = reverbBuffer.getChannelData(channel);
@@ -273,7 +279,7 @@ const Navbar = () => {
       }
       reverb.buffer = reverbBuffer;
 
-      // Cấu hình Distortion
+      // Distortion
       const makeDistortionCurve = (amount) => {
         const samples = 44100;
         const curve = new Float32Array(samples);
@@ -285,53 +291,67 @@ const Navbar = () => {
       };
       distortion.curve = makeDistortionCurve(soundSettings.distortionAmount);
 
-      // Cấu hình Compressor
-      compressor.threshold.setValueAtTime(soundSettings.compressorThreshold, audioContext.currentTime);
-      compressor.ratio.setValueAtTime(soundSettings.compressorRatio, audioContext.currentTime);
-      compressor.knee.setValueAtTime(30, audioContext.currentTime);
-      compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
-      compressor.release.setValueAtTime(0.25, audioContext.currentTime);
-
-      // Kết nối các node
-      lfo.connect(lfoGain);
-      lfoGain.connect(filter.frequency);
-      oscillator.connect(filter);
-      filter.connect(distortion);
+      // Kết nối
+      oscillator.connect(distortion);
       distortion.connect(delay);
       delay.connect(delayGain);
       delayGain.connect(delay);
       delay.connect(reverb);
       distortion.connect(reverb);
-      reverb.connect(compressor);
-      compressor.connect(gainNode);
+      reverb.connect(gainNode);
       gainNode.connect(audioContext.destination);
 
-      // Cấu hình oscillator
       oscillator.type = 'sine';
       oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      gainNode.gain.setValueAtTime(soundSettings.volume, audioContext.currentTime);
-
-      // Bắt đầu và dừng
-      lfo.start();
+      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
       oscillator.start();
       oscillator.stop(audioContext.currentTime + soundSettings.duration);
-      lfo.stop(audioContext.currentTime + soundSettings.duration);
     } catch (error) {
       console.log('Lỗi khi phát âm thanh:', error);
     }
-  };
+  }, [audioContext, hasInteracted, soundSettings]);
 
   // Thêm hàm test âm thanh
   const testSound = () => {
     playNotificationSound();
   };
 
+  // Thêm hàm toggle âm thanh
+  const toggleSound = () => {
+    setSoundSettings(prev => {
+      const newSettings = {
+        ...prev,
+        enabled: !prev.enabled
+      };
+      localStorage.setItem('soundSettings', JSON.stringify(newSettings));
+      
+      // Hiển thị toast notification
+      toast.success(
+        newSettings.enabled ? "Đã bật âm thanh thông báo" : "Đã tắt âm thanh thông báo",
+        {
+          position: "top-right",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
+      
+      return newSettings;
+    });
+  };
+
   // Thêm hàm cập nhật settings
   const handleSoundSettingChange = (setting, value) => {
-    setSoundSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
+    setSoundSettings(prev => {
+      const newSettings = {
+        ...prev,
+        [setting]: value
+      };
+      localStorage.setItem('soundSettings', JSON.stringify(newSettings));
+      return newSettings;
+    });
   };
 
   // Thêm event listener cho tương tác người dùng
@@ -358,10 +378,19 @@ const Navbar = () => {
 
   // Sửa lại useEffect cho notifications
   useEffect(() => {
-    if (notifications.length > 0 && !notifications[0].daDoc && hasInteracted) {
-      playNotificationSound();
+    if (notifications.length > 0 && !notifications[0].daDoc && hasInteracted && soundSettings.enabled) {
+      // Chỉ phát âm thanh nếu thông báo mới được thêm vào (không phải khi load lần đầu)
+      const lastNotification = notifications[0];
+      const now = new Date();
+      const notificationTime = new Date(lastNotification.ngay);
+      const timeDiff = now - notificationTime;
+      
+      // Chỉ phát âm thanh nếu thông báo được tạo trong vòng 5 giây qua
+      if (timeDiff < 5000) {
+        playNotificationSound();
+      }
     }
-  }, [notifications, hasInteracted]);
+  }, [notifications, hasInteracted, soundSettings.enabled, playNotificationSound]);
 
   // Sửa lại useEffect cho ticker animation
   useEffect(() => {
@@ -919,6 +948,23 @@ const Navbar = () => {
                                     <CheckIcon className="h-5 w-5" />
                                   </motion.button>
                                 )}
+                                {/* Nút bánh răng cài đặt âm thanh chuyển lên đây */}
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setShowSoundSettings(!showSoundSettings)}
+                                  className={`relative p-2 rounded-xl transition-colors duration-200 ${showSoundSettings ? "bg-emerald-100 text-emerald-600" : "text-gray-600 hover:bg-gray-100"}`}
+                                >
+                                  <Cog6ToothIcon className="h-5 w-5" />
+                                  {/* Sound status indicator */}
+                                  {!soundSettings.enabled && (
+                                    <motion.div
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"
+                                    />
+                                  )}
+                                </motion.button>
                               </div>
                             </div>
 
@@ -935,70 +981,61 @@ const Navbar = () => {
                             </div>
 
                             {/* Filter Tabs */}
-                            <div className="flex items-center space-x-2 mb-4">
-                              <div className="flex-1 flex space-x-1 bg-gray-100/80 backdrop-blur-sm p-1 rounded-xl">
-                                {["all", "unread", "read"].map((filter) => (
-                                  <button
-                                    key={filter}
-                                    onClick={() => setActiveFilter(filter)}
-                                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                                      activeFilter === filter
-                                        ? "bg-white text-emerald-600 shadow-sm"
-                                        : "text-gray-600 hover:text-gray-900"
-                                    }`}
-                                  >
-                                    {filter === "all" ? "Tất cả" : filter === "unread" ? "Chưa đọc" : "Đã đọc"}
-                                  </button>
-                                ))}
-                              </div>
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setShowFilters(!showFilters)}
-                                className={`p-2 rounded-xl transition-colors duration-200 ${
-                                  showFilters ? "bg-emerald-100 text-emerald-600" : "text-gray-600 hover:bg-gray-100"
-                                }`}
-                              >
-                                <FunnelIcon className="h-5 w-5" />
-                              </motion.button>
-                            </div>
-
-                            {/* Type Filters */}
-                            <AnimatePresence>
-                              {showFilters && (
-                                <motion.div
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: "auto", opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  className="overflow-hidden"
+                            <div className="flex flex-col items-center w-full mb-4 gap-2">
+                              <div className="flex w-full justify-center">
+                                <div className="flex-1 flex space-x-1 bg-gray-100/80 backdrop-blur-sm p-1 rounded-xl max-w-[400px]">
+                                  {['all', 'unread', 'read'].map((filter) => (
+                                    <button
+                                      key={filter}
+                                      onClick={() => setActiveFilter(filter)}
+                                      className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-center
+                                        ${activeFilter === filter
+                                          ? 'bg-white text-emerald-600 shadow-sm'
+                                          : 'text-gray-600 hover:text-gray-900'}
+                                      `}
+                                    >
+                                      {filter === 'all' ? 'Tất cả' : filter === 'unread' ? 'Chưa đọc' : 'Đã đọc'}
+                                    </button>
+                                  ))}
+                                </div>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setShowFilters(!showFilters)}
+                                  className={`ml-2 p-2 rounded-xl transition-colors duration-200 self-center
+                                    ${showFilters ? 'bg-emerald-100 text-emerald-600' : 'text-gray-600 hover:bg-gray-100'}`}
                                 >
-                                  <div className="flex flex-wrap gap-2 mb-4">
-                                    {["all", "important", "normal"].map((type) => (
-                                      <button
-                                        key={type}
-                                        onClick={() => setNotificationType(type)}
-                                        className={`flex items-center space-x-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                                          notificationType === type
-                                            ? "bg-emerald-100 text-emerald-600"
-                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                        }`}
-                                      >
-                                        {type === "all" ? (
-                                          <BellIcon className="h-4 w-4" />
-                                        ) : type === "important" ? (
-                                          <ExclamationCircleIcon className="h-4 w-4" />
-                                        ) : (
-                                          <InformationCircleIcon className="h-4 w-4" />
-                                        )}
-                                        <span>
-                                          {type === "all" ? "Tất cả" : type === "important" ? "Quan trọng" : "Thông thường"}
-                                        </span>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
+                                  <FunnelIcon className="h-5 w-5" />
+                                </motion.button>
+                              </div>
+                              {/* Type Filters */}
+                              <AnimatePresence>
+                                {showFilters && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="overflow-hidden w-full flex justify-center"
+                                  >
+                                    <div className="flex flex-1 justify-center gap-2 max-w-[400px] mt-2">
+                                      {['all', 'important', 'normal'].map((type) => (
+                                        <button
+                                          key={type}
+                                          onClick={() => setNotificationType(type)}
+                                          className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 text-center
+                                            ${notificationType === type
+                                              ? 'bg-emerald-100 text-emerald-600'
+                                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+                                          `}
+                                        >
+                                          {type === 'all' ? 'Tất cả' : type === 'important' ? 'Quan trọng' : 'Thông thường'}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
 
                             {/* Bulk Actions */}
                             {isMultiSelectMode && (
@@ -1046,16 +1083,6 @@ const Navbar = () => {
                                 </div>
                               </motion.div>
                             )}
-
-                            {/* Thêm nút cài đặt âm thanh */}
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setShowSoundSettings(!showSoundSettings)}
-                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors duration-200"
-                            >
-                              <Cog6ToothIcon className="h-5 w-5" />
-                            </motion.button>
                           </div>
 
                           {/* Form cài đặt âm thanh */}
@@ -1070,107 +1097,36 @@ const Navbar = () => {
                                 <div className="p-4 border-b border-gray-100 bg-gray-50">
                                   <h3 className="text-sm font-semibold text-gray-900 mb-4">Cài đặt âm thanh thông báo</h3>
                                   
-                                  <div className="max-h-[300px] overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-                                    {/* Filter Frequency */}
-                                    <div>
-                                      <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium text-gray-700">Tần số lọc</span>
-                                        <span className="text-sm text-gray-500">Cutoff Frequency</span>
+                                  {/* Toggle Sound Switch */}
+                                  <div className="flex items-center justify-between mb-4 p-3 bg-white rounded-xl border border-gray-200">
+                                    <div className="flex items-center space-x-3">
+                                      <div className={`p-2 rounded-lg ${soundSettings.enabled ? 'bg-emerald-100' : 'bg-gray-100'}`}>
+                                        <BellIcon className={`h-5 w-5 ${soundSettings.enabled ? 'text-emerald-600' : 'text-gray-400'}`} />
                                       </div>
-                                      <div className="flex items-center space-x-2">
-                                        <input
-                                          type="range"
-                                          min="100"
-                                          max="2000"
-                                          step="100"
-                                          value={soundSettings.filterFrequency}
-                                          onChange={(e) => handleSoundSettingChange('filterFrequency', Number(e.target.value))}
-                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.filterFrequency}Hz</span>
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">Âm thanh thông báo</p>
+                                        <p className="text-xs text-gray-500">
+                                          {soundSettings.enabled ? 'Đang bật' : 'Đang tắt'}
+                                        </p>
                                       </div>
                                     </div>
-
-                                    {/* Filter Q */}
-                                    <div>
-                                      <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium text-gray-700">Độ sắc lọc</span>
-                                        <span className="text-sm text-gray-500">Resonance/Q-Factor</span>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        <input
-                                          type="range"
-                                          min="1"
-                                          max="20"
-                                          step="1"
-                                          value={soundSettings.filterQ}
-                                          onChange={(e) => handleSoundSettingChange('filterQ', Number(e.target.value))}
-                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.filterQ}</span>
-                                      </div>
-                                    </div>
-
-                                    {/* LFO Frequency */}
-                                    <div>
-                                      <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium text-gray-700">Tốc độ điều chế</span>
-                                        <span className="text-sm text-gray-500">Modulation Rate</span>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        <input
-                                          type="range"
-                                          min="1"
-                                          max="10"
-                                          step="0.5"
-                                          value={soundSettings.lfoFrequency}
-                                          onChange={(e) => handleSoundSettingChange('lfoFrequency', Number(e.target.value))}
-                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.lfoFrequency}Hz</span>
-                                      </div>
-                                    </div>
-
-                                    {/* LFO Gain */}
-                                    <div>
-                                      <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium text-gray-700">Độ sâu điều chế</span>
-                                        <span className="text-sm text-gray-500">Modulation Depth</span>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        <input
-                                          type="range"
-                                          min="10"
-                                          max="100"
-                                          step="5"
-                                          value={soundSettings.lfoGain}
-                                          onChange={(e) => handleSoundSettingChange('lfoGain', Number(e.target.value))}
-                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.lfoGain}Hz</span>
-                                      </div>
-                                    </div>
-
-                                    {/* Volume */}
-                                    <div>
-                                      <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium text-gray-700">Âm lượng</span>
-                                        <span className="text-sm text-gray-500">Gain/Amplitude</span>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        <input
-                                          type="range"
-                                          min="0"
-                                          max="1"
-                                          step="0.1"
-                                          value={soundSettings.volume}
-                                          onChange={(e) => handleSoundSettingChange('volume', Number(e.target.value))}
-                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <span className="text-sm text-gray-600 w-16 text-right">{Math.round(soundSettings.volume * 100)}%</span>
-                                      </div>
-                                    </div>
-
+                                    <motion.button
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
+                                      onClick={toggleSound}
+                                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                                        soundSettings.enabled ? 'bg-emerald-600' : 'bg-gray-300'
+                                      }`}
+                                    >
+                                      <motion.span
+                                        animate={{ x: soundSettings.enabled ? 20 : 2 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="inline-block h-4 w-4 transform rounded-full bg-white shadow-lg"
+                                      />
+                                    </motion.button>
+                                  </div>
+                                  
+                                  <div className="pr-2 space-y-4 custom-scrollbar">
                                     {/* Duration */}
                                     <div>
                                       <div className="flex justify-between items-center mb-1">
@@ -1267,45 +1223,6 @@ const Navbar = () => {
                                           className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                         />
                                         <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.distortionAmount}%</span>
-                                      </div>
-                                    </div>
-
-                                    {/* Compressor Controls */}
-                                    <div>
-                                      <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium text-gray-700">Ngưỡng nén</span>
-                                        <span className="text-sm text-gray-500">Compressor Threshold</span>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        <input
-                                          type="range"
-                                          min="-60"
-                                          max="0"
-                                          step="1"
-                                          value={soundSettings.compressorThreshold}
-                                          onChange={(e) => handleSoundSettingChange('compressorThreshold', Number(e.target.value))}
-                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.compressorThreshold}dB</span>
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium text-gray-700">Tỷ lệ nén</span>
-                                        <span className="text-sm text-gray-500">Compressor Ratio</span>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        <input
-                                          type="range"
-                                          min="1"
-                                          max="20"
-                                          step="1"
-                                          value={soundSettings.compressorRatio}
-                                          onChange={(e) => handleSoundSettingChange('compressorRatio', Number(e.target.value))}
-                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <span className="text-sm text-gray-600 w-16 text-right">{soundSettings.compressorRatio}:1</span>
                                       </div>
                                     </div>
                                   </div>
