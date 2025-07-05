@@ -18,8 +18,10 @@ export const AuthProvider = ({ children }) => {
       return // Bỏ qua nếu user đã được đặt hoặc kiểm tra ban đầu hoàn tất
     }
 
-    const token = localStorage.getItem("token")
-    const userId = localStorage.getItem("userId")
+    // Kiểm tra token trong localStorage trước, sau đó sessionStorage
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token")
+    const userId = localStorage.getItem("userId") || sessionStorage.getItem("userId")
+    
     if (token && userId) {
       console.log("Xác thực với userId:", userId, "và token:", token.slice(0, 10) + "...")
       setIsLoading(true)
@@ -32,6 +34,7 @@ export const AuthProvider = ({ children }) => {
           if (res.data.user._id !== userId) {
             console.error("User ID không khớp:", res.data.user._id, userId)
             localStorage.clear()
+            sessionStorage.clear()
             setUser(null)
             navigate("/")
             toast.error("Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.", {
@@ -47,11 +50,13 @@ export const AuthProvider = ({ children }) => {
             gioiTinh: res.data.user.gioiTinh,
             anhDaiDien: res.data.user.anhDaiDien,
           })
-          localStorage.setItem("userName", res.data.user.hoTen)
-          localStorage.setItem("email", res.data.user.email)
-          localStorage.setItem("ngaySinh", res.data.user.ngaySinh || "")
-          localStorage.setItem("gioiTinh", res.data.user.gioiTinh || "")
-          localStorage.setItem("anhDaiDien", res.data.user.anhDaiDien || "")
+          // Cập nhật thông tin user vào storage tương ứng
+          const storage = localStorage.getItem("token") ? localStorage : sessionStorage
+          storage.setItem("userName", res.data.user.hoTen)
+          storage.setItem("email", res.data.user.email)
+          storage.setItem("ngaySinh", res.data.user.ngaySinh || "")
+          storage.setItem("gioiTinh", res.data.user.gioiTinh || "")
+          storage.setItem("anhDaiDien", res.data.user.anhDaiDien || "")
           setIsInitialCheckDone(true)
           toast.success(`Chào mừng trở lại, ${res.data.user.hoTen}!`, {
             icon: "👋",
@@ -66,6 +71,7 @@ export const AuthProvider = ({ children }) => {
             headers: err.config?.headers,
           })
           localStorage.clear()
+          sessionStorage.clear()
           setUser(null)
           navigate("/")
           toast.error(err.response?.data?.message || "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.", {
@@ -84,7 +90,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [navigate, user])
 
-  const login = async (tenDangNhap, matKhau) => {
+  const login = async (tenDangNhap, matKhau, rememberMe = false) => {
     try {
       setIsLoading(true)
       const res = await axios.post(`${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/users/login`, {
@@ -92,13 +98,26 @@ export const AuthProvider = ({ children }) => {
         matKhau,
       })
       console.log("Phản hồi đăng nhập:", JSON.stringify(res.data, null, 2))
-      localStorage.setItem("token", res.data.token)
-      localStorage.setItem("userId", res.data.userId)
-      localStorage.setItem("userName", res.data.user.hoTen)
-      localStorage.setItem("email", res.data.user.email)
-      localStorage.setItem("ngaySinh", res.data.user.ngaySinh || "")
-      localStorage.setItem("gioiTinh", res.data.user.gioiTinh || "")
-      localStorage.setItem("anhDaiDien", res.data.user.anhDaiDien || "")
+      
+      // Lưu token vào localStorage hoặc sessionStorage tùy theo rememberMe
+      if (rememberMe) {
+        localStorage.setItem("token", res.data.token)
+        localStorage.setItem("userId", res.data.userId)
+        localStorage.setItem("userName", res.data.user.hoTen)
+        localStorage.setItem("email", res.data.user.email)
+        localStorage.setItem("ngaySinh", res.data.user.ngaySinh || "")
+        localStorage.setItem("gioiTinh", res.data.user.gioiTinh || "")
+        localStorage.setItem("anhDaiDien", res.data.user.anhDaiDien || "")
+      } else {
+        sessionStorage.setItem("token", res.data.token)
+        sessionStorage.setItem("userId", res.data.userId)
+        sessionStorage.setItem("userName", res.data.user.hoTen)
+        sessionStorage.setItem("email", res.data.user.email)
+        sessionStorage.setItem("ngaySinh", res.data.user.ngaySinh || "")
+        sessionStorage.setItem("gioiTinh", res.data.user.gioiTinh || "")
+        sessionStorage.setItem("anhDaiDien", res.data.user.anhDaiDien || "")
+      }
+      
       // console.log('localStorage sau khi đăng nhập:', {
       //   token: localStorage.getItem('token').slice(0, 10) + '...',
       //   userId: localStorage.getItem('userId'),
@@ -128,6 +147,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     console.log("Đăng xuất người dùng:", user?._id)
     localStorage.clear()
+    sessionStorage.clear()
     setUser(null)
     navigate("/")
     toast.info("Đã đăng xuất thành công.", {

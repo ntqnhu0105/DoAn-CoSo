@@ -17,6 +17,7 @@ import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import Overview from './pages/Overview';
 import Chatbot from './components/Chatbot';
+import AboutUs from './pages/AboutUs';
 
 // Component để ẩn Navbar và thêm Chatbot trên các trang được bảo vệ
 const Layout = ({ children }) => {
@@ -49,6 +50,14 @@ function App() {
           element={
             <Layout>
               <Register />
+            </Layout>
+          }
+        />
+        <Route
+          path="/about-us"
+          element={
+            <Layout>
+              <AboutUs />
             </Layout>
           }
         />

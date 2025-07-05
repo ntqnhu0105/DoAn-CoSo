@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Account, User } = require('../models');
+const { Account, User, Notification } = require('../models');
 const jwt = require('jsonwebtoken');
 
 // Middleware xác thực
@@ -70,6 +70,20 @@ router.post('/', authenticate, async (req, res) => {
       soDu,
     });
     await account.save();
+    // Thêm cảnh báo nếu số dư thấp
+    if (soDu < 200000) {
+      try {
+        await Notification.create({
+          maNguoiDung,
+          noiDung: `Cảnh báo: Số dư tài khoản "${tenTaiKhoan}" thấp hơn 200,000 VNĐ!`,
+          loai: 'Cảnh báo',
+          quanTrong: true,
+          daDoc: false
+        });
+      } catch (notifyErr) {
+        console.error('Lỗi khi tạo notification cảnh báo số dư thấp:', notifyErr);
+      }
+    }
     res.status(201).json(account);
   } catch (error) {
     console.error('Create account error:', error);
@@ -101,6 +115,20 @@ router.put('/:id', authenticate, async (req, res) => {
     });
 
     await account.save();
+    // Thêm cảnh báo nếu số dư thấp sau cập nhật
+    if (account.soDu < 200000) {
+      try {
+        await Notification.create({
+          maNguoiDung: account.maNguoiDung,
+          noiDung: `Cảnh báo: Số dư tài khoản "${account.tenTaiKhoan}" thấp hơn 200,000 VNĐ!`,
+          loai: 'Cảnh báo',
+          quanTrong: true,
+          daDoc: false
+        });
+      } catch (notifyErr) {
+        console.error('Lỗi khi tạo notification cảnh báo số dư thấp:', notifyErr);
+      }
+    }
     res.json(account);
 
   } catch (error) {

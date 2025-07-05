@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { Debt, User } = require('../models');
+const { Debt, User, Notification } = require('../models');
 
 // Middleware kiểm tra userId hợp lệ
 const verifyUser = async (req, res, next) => {
@@ -233,7 +233,37 @@ router.put('/:id', verifyUser, async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    console.log('Updated debt:', debt);
+    // Tạo notification theo trạng thái mới
+    try {
+      const now = new Date();
+      if (debt.trangThai === 'Đã thanh toán') {
+        await Notification.create({
+          maNguoiDung: debt.maNguoiDung,
+          noiDung: `Chúc mừng! Khoản nợ ${debt.soTien.toLocaleString()} VNĐ đã được thanh toán!`,
+          loai: 'Cập nhật',
+          quanTrong: true,
+          daDoc: false
+        });
+      } else if (debt.trangThai === 'Quá hạn' || (debt.ngayKetThuc && new Date(debt.ngayKetThuc) <= now)) {
+        await Notification.create({
+          maNguoiDung: debt.maNguoiDung,
+          noiDung: `Cảnh báo: Khoản nợ ${debt.soTien.toLocaleString()} VNĐ đã quá hạn!`,
+          loai: 'Cảnh báo',
+          quanTrong: true,
+          daDoc: false
+        });
+      } else if (debt.trangThai === 'Hoạt động' && debt.ngayTraTiepTheo && new Date(debt.ngayTraTiepTheo).toDateString() === now.toDateString()) {
+        await Notification.create({
+          maNguoiDung: debt.maNguoiDung,
+          noiDung: `Nhắc nhở: Hôm nay là ngày trả nợ cho khoản nợ ${debt.soTien.toLocaleString()} VNĐ!`,
+          loai: 'Nhắc nhở',
+          quanTrong: false,
+          daDoc: false
+        });
+      }
+    } catch (notifyErr) {
+      console.error('Lỗi khi tạo notification cho khoản nợ:', notifyErr);
+    }
     res.json({ message: 'Cập nhật khoản nợ thành công', debt });
   } catch (error) {
     await session.abortTransaction();

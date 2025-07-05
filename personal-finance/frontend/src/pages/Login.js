@@ -101,7 +101,7 @@ const Login = () => {
     }
     setIsLoading(true)
     try {
-      await login(tenDangNhap, matKhau)
+      await login(tenDangNhap, matKhau, rememberMe)
       setError("")
       toast.success("Đăng nhập thành công!", {
         icon: "🎉",
@@ -110,13 +110,6 @@ const Login = () => {
           color: "white",
         },
       })
-      if (rememberMe) {
-        localStorage.setItem('token', localStorage.getItem('token'));
-      } else {
-        sessionStorage.setItem('token', localStorage.getItem('token'));
-        localStorage.removeItem('token');
-      }
-      navigate("/dashboard")
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Đăng nhập thất bại"
       setError(errorMessage)

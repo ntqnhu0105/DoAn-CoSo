@@ -185,6 +185,29 @@ router.post('/', authenticate, async (req, res) => {
     await session.commitTransaction();
     session.endSession();
     
+    // Nếu ngày nhắc nhở <= hiện tại, tạo notification ngay
+    try {
+      if (reminderDate <= new Date()) {
+        let notificationContent = reminder.noiDung;
+        if (goalId) {
+          notificationContent = reminder.noiDung || 'Nhắc nhở mục tiêu tiết kiệm';
+        } else if (debtId) {
+          notificationContent = reminder.noiDung || 'Nhắc nhở khoản nợ';
+        } else if (investmentId) {
+          notificationContent = reminder.noiDung || 'Nhắc nhở đầu tư';
+        }
+        await Notification.create({
+          maNguoiDung: userId,
+          noiDung: notificationContent,
+          loai: 'Nhắc nhở',
+          quanTrong: true,
+          daDoc: false
+        });
+      }
+    } catch (notifyErr) {
+      console.error('Lỗi khi tạo notification nhắc nhở ngay:', notifyErr);
+    }
+    
     // Populate thông tin đối tượng trước khi trả về
     await reminder.populate('goalId', 'tenMucTieu soTienMucTieu soTienHienTai');
     await reminder.populate('debtId', 'soTien soTienDaTra');

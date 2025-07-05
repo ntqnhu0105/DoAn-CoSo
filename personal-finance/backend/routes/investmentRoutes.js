@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { Investment, User } = require('../models');
+const { Investment, User, Notification } = require('../models');
 
 // Middleware kiểm tra userId hợp lệ
 const verifyUser = async (req, res, next) => {
@@ -178,7 +178,36 @@ router.put('/:id', verifyUser, async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    console.log('Updated investment:', investment);
+    // Tạo notification theo trạng thái mới
+    try {
+      if (investment.trangThai === 'Đã bán') {
+        await Notification.create({
+          maNguoiDung: investment.maNguoiDung,
+          noiDung: `Đầu tư "${investment.loai}" đã được bán. Lợi nhuận: ${investment.loiNhuan ? investment.loiNhuan.toLocaleString() : 0} VNĐ`,
+          loai: 'Cập nhật',
+          quanTrong: true,
+          daDoc: false
+        });
+      } else if (investment.trangThai === 'Đang chờ') {
+        await Notification.create({
+          maNguoiDung: investment.maNguoiDung,
+          noiDung: `Đầu tư "${investment.loai}" đang chờ xử lý. Giá trị: ${investment.giaTri ? investment.giaTri.toLocaleString() : 0} VNĐ`,
+          loai: 'Nhắc nhở',
+          quanTrong: false,
+          daDoc: false
+        });
+      } else if (investment.trangThai === 'Hoạt động') {
+        await Notification.create({
+          maNguoiDung: investment.maNguoiDung,
+          noiDung: `Đầu tư "${investment.loai}" đã được cập nhật. Giá trị hiện tại: ${investment.giaTri ? investment.giaTri.toLocaleString() : 0} VNĐ`,
+          loai: 'Cập nhật',
+          quanTrong: false,
+          daDoc: false
+        });
+      }
+    } catch (notifyErr) {
+      console.error('Lỗi khi tạo notification cho đầu tư:', notifyErr);
+    }
     res.json({ message: 'Cập nhật đầu tư thành công', investment });
   } catch (error) {
     await session.abortTransaction();

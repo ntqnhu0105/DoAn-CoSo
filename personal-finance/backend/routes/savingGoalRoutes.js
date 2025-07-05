@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { SavingGoal, User } = require('../models');
+const { SavingGoal, User, Notification } = require('../models');
 
 // Lấy danh sách mục tiêu tiết kiệm của người dùng
 router.get('/:userId', async (req, res) => {
@@ -160,6 +160,37 @@ router.put('/:id', async (req, res) => {
     await savingGoal.save({ session });
     await session.commitTransaction();
     session.endSession();
+    // Tạo notification theo trạng thái mới
+    try {
+      const now = new Date();
+      if (savingGoal.trangThai === 'Hoàn thành') {
+        await Notification.create({
+          maNguoiDung: savingGoal.maNguoiDung,
+          noiDung: `Chúc mừng! Mục tiêu "${savingGoal.tenMucTieu}" đã được hoàn thành!`,
+          loai: 'Cập nhật',
+          quanTrong: true,
+          daDoc: false
+        });
+      } else if (savingGoal.trangThai === 'Thất bại' || (savingGoal.hanChot && new Date(savingGoal.hanChot) <= now)) {
+        await Notification.create({
+          maNguoiDung: savingGoal.maNguoiDung,
+          noiDung: `Cảnh báo: Mục tiêu "${savingGoal.tenMucTieu}" đã quá hạn hoặc thất bại!`,
+          loai: 'Cảnh báo',
+          quanTrong: true,
+          daDoc: false
+        });
+      } else if (savingGoal.trangThai === 'Đang thực hiện' && savingGoal.hanChot && new Date(savingGoal.hanChot) > now) {
+        await Notification.create({
+          maNguoiDung: savingGoal.maNguoiDung,
+          noiDung: `Mục tiêu "${savingGoal.tenMucTieu}" đã được cập nhật. Hạn chót: ${new Date(savingGoal.hanChot).toLocaleDateString()}`,
+          loai: 'Cập nhật',
+          quanTrong: false,
+          daDoc: false
+        });
+      }
+    } catch (notifyErr) {
+      console.error('Lỗi khi tạo notification cho mục tiêu:', notifyErr);
+    }
     res.json(savingGoal);
   } catch (error) {
     await session.abortTransaction();

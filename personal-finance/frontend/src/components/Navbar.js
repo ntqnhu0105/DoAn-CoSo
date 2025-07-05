@@ -1484,44 +1484,65 @@ const Navbar = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 }}
                               >
-                              <Link
-                                to="/settings"
-                                className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 transition-all duration-200"
-                                onClick={() => setShowUserDropdown(false)}
+                                <Link
+                                  to="/settings"
+                                  className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-blue-50 hover:text-emerald-600 transition-all duration-200"
+                                  onClick={() => setShowUserDropdown(false)}
                                 >
                                   <motion.div
                                     whileHover={{ rotate: 360 }}
                                     transition={{ duration: 0.5 }}
                                     className="p-2 rounded-lg bg-gray-100 group-hover:bg-emerald-100"
-                              >
-                                <Cog6ToothIcon className="h-5 w-5" />
+                                  >
+                                    <Cog6ToothIcon className="h-5 w-5" />
                                   </motion.div>
-                                <span className="font-medium">Cài Đặt</span>
-                              </Link>
+                                  <span className="font-medium">Cài Đặt</span>
+                                </Link>
                               </motion.div>
+                              <motion.div
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.35 }}
+                              >
+                                <Link
+                                  to="/about-us"
+                                  className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-purple-100 hover:text-purple-700 transition-all duration-200"
+                                  onClick={() => setShowUserDropdown(false)}
+                                >
+                                  <motion.div
+                                    whileHover={{ rotate: 360 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="p-2 rounded-lg bg-gray-100 group-hover:bg-purple-100"
+                                  >
+                                    <InformationCircleIcon className="h-5 w-5" />
+                                  </motion.div>
+                                  <span className="font-medium">Về chúng tôi</span>
+                                </Link>
+                              </motion.div>
+                              <div className="border-t border-gray-200 my-2"></div>
                               <motion.div
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.4 }}
                               >
-                              <motion.button
-                                onClick={() => {
-                                  handleLogout()
-                                  setShowUserDropdown(false)
-                                }}
-                                whileHover={{ scale: 1.02 }}
+                                <motion.button
+                                  onClick={() => {
+                                    handleLogout()
+                                    setShowUserDropdown(false)
+                                  }}
+                                  whileHover={{ scale: 1.02 }}
                                   whileTap={{ scale: 0.98 }}
-                                className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 transition-all duration-200 w-full"
+                                  className="group flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-600 transition-all duration-200 w-full"
                                 >
                                   <motion.div
                                     whileHover={{ rotate: 360 }}
                                     transition={{ duration: 0.5 }}
                                     className="p-2 rounded-lg bg-gray-100 group-hover:bg-red-100"
-                              >
-                                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                                  >
+                                    <ArrowRightOnRectangleIcon className="h-5 w-5" />
                                   </motion.div>
-                                <span className="font-medium">Đăng Xuất</span>
-                              </motion.button>
+                                  <span className="font-medium">Đăng Xuất</span>
+                                </motion.button>
                               </motion.div>
                             </div>
                           </div>
@@ -1727,6 +1748,14 @@ const Navbar = () => {
                         <span className="font-medium">Đăng Xuất</span>
                       </motion.button>
                     </div>
+                    <Link
+                      to="/about-us"
+                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-purple-100 hover:text-purple-700 rounded-xl transition-all duration-300"
+                      onClick={() => setShowMenu(false)}
+                    >
+                      <InformationCircleIcon className="h-5 w-5" />
+                      <span className="font-medium">Về chúng tôi</span>
+                    </Link>
                   </>
                 ) : (
                   <Link

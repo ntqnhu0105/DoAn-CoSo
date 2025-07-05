@@ -195,7 +195,7 @@ const Account = () => {
   }
 
   // Tính tổng số dư
-  const totalBalance = accounts.reduce((sum, account) => sum + account.soDu, 0)
+  const totalBalance = accounts.reduce((sum, account) => sum + Number(account.soDu), 0)
 
   // Icon cho từng loại tài khoản
   const getAccountIcon = (type) => {
@@ -273,54 +273,81 @@ const Account = () => {
               }
             }}
             whileHover={{ 
-              scale: 1.05,
+              scale: 1.02,
               transition: {
                 type: "spring",
                 stiffness: 400,
                 damping: 10
               }
             }}
-            className="mt-6 relative"
+            className="mt-6"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 blur-xl rounded-full transform -translate-y-1/2"></div>
-            <div className="relative bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-2xl border border-white/20">
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Tổng số dư</p>
-                    <p className="text-3xl font-bold mt-1 bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                      {totalBalance.toLocaleString()} VNĐ
-                    </p>
-                  </div>
+            <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+              {/* Header với tổng số dư */}
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center mb-4">
                   <motion.div 
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.5 }}
-                    className="p-4 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-2xl shadow-lg"
+                    className="p-3 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl shadow-lg mr-4"
                   >
-                    <BanknotesIcon className="h-8 w-8 text-white" />
+                    <BanknotesIcon className="h-6 w-6 text-white" />
                   </motion.div>
-                </div>
-                
-                {/* Additional Info */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
-                  <div className="bg-emerald-50/50 rounded-xl p-3">
-                    <p className="text-xs text-gray-600 font-medium">Số tài khoản</p>
-                    <p className="text-lg font-semibold text-green-700">{accounts.length}</p>
-                  </div>
-                  <div className="bg-blue-50/50 rounded-xl p-3">
-                    <p className="text-xs text-gray-600 font-medium">Trung bình mỗi tài khoản</p>
-                    <p className="text-lg font-semibold text-purple-700">
-                      {accounts.length > 0 
-                        ? (totalBalance / accounts.length).toLocaleString() 
-                        : "0"} VNĐ
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Tổng số dư</p>
+                    <p className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                      {totalBalance.toLocaleString()} VNĐ
                     </p>
                   </div>
                 </div>
-
-                {/* Last Updated */}
-                <div className="text-xs text-gray-400 text-right">
-                  Cập nhật lúc: {new Date().toLocaleTimeString('vi-VN')}
+              </div>
+              
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Số tài khoản */}
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-6 text-center border border-emerald-200">
+                  <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <WalletIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Số tài khoản</p>
+                  <p className="text-2xl font-bold text-emerald-700">{accounts.length}</p>
                 </div>
+                
+                {/* Trung bình mỗi tài khoản */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 text-center border border-blue-200">
+                  <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <ClipboardDocumentListIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Trung bình mỗi tài khoản</p>
+                  <p className="text-2xl font-bold text-blue-700">
+                    {accounts.length > 0 
+                      ? (totalBalance / accounts.length).toLocaleString('vi-VN', {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0
+                        })
+                      : "0"} VNĐ
+                  </p>
+                </div>
+                
+                {/* Tài khoản có số dư cao nhất */}
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 text-center border border-purple-200">
+                  <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                    <BanknotesIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Tài khoản cao nhất</p>
+                  <p className="text-lg font-bold text-purple-700">
+                    {accounts.length > 0 
+                      ? Math.max(...accounts.map(acc => Number(acc.soDu))).toLocaleString()
+                      : "0"} VNĐ
+                  </p>
+                </div>
+              </div>
+
+              {/* Last Updated */}
+              <div className="text-center mt-6 pt-4 border-t border-gray-100">
+                <p className="text-xs text-gray-400">
+                  Cập nhật lúc: {new Date().toLocaleTimeString('vi-VN')}
+                </p>
               </div>
             </div>
           </motion.div>

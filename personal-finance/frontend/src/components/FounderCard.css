@@ -1,0 +1,111 @@
+.card {
+  --font-color: #323232;
+  --font-color-sub: #666;
+  --bg-color: #fff;
+  --main-color: #323232;
+  width: 200px;
+  height: 254px;
+  background: var(--bg-color);
+  border: 2px solid var(--main-color);
+  box-shadow: 4px 4px var(--main-color);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.card-photo {
+  width: 80px;
+  height: 80px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+  background-color: #ccc;
+  border-radius: 30%;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.founder-photo-1 {
+  background: radial-gradient(circle, #ffe0b2 60%, #a1887f 100%);
+}
+.founder-photo-2 {
+  background: radial-gradient(circle, #b2dfdb 60%, #00695c 100%);
+}
+.founder-photo-3 {
+  background: radial-gradient(circle, #bbdefb 60%, #1976d2 100%);
+}
+
+.card-title {
+  text-align: center;
+  color: var(--font-color);
+  font-size: 20px;
+  font-weight: 400;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.card-title span {
+  font-size: 15px;
+  color: var(--font-color-sub);
+}
+
+.card-socials {
+  display: flex;
+  height: 0;
+  opacity: 0;
+  margin-top: 12px;
+  gap: 20px;
+  transition: 0.5s;
+}
+
+.card-socials-btn {
+  width: 25px;
+  height: 25px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.card-socials-btn svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--main-color);
+}
+
+.card:hover > .card-socials {
+  opacity: 1;
+  height: 35px;
+}
+
+.card-socials-btn:hover {
+  transform: translateY(-5px);
+  transition: all 0.15s;
+}
+
+.founder-photo-img {
+  border-radius: 50%;
+  object-fit: cover;
+  width: 80px;
+  height: 80px;
+  border: 2px solid #222;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  background: #fff;
+}
+
+.founder-modal-photo.founder-photo-img {
+  width: 100px;
+  height: 100px;
+  border-width: 2px;
+}
+
+@media (max-width: 600px) {
+  .founder-photo-img {
+    width: 60px;
+    height: 60px;
+  }
+  .founder-modal-photo.founder-photo-img {
+    width: 70px;
+    height: 70px;
+  }
+} 

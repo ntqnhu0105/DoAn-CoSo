@@ -1,37 +1,68 @@
 const mongoose = require('mongoose');
 const cron = require('node-cron');
-const { SavingGoal, Transaction } = require('../models');
+const { SavingGoal, Transaction, Notification } = require('../models');
 
 // Hàm cập nhật trạng thái mục tiêu tiết kiệm
 const updateSavingGoalStatus = async (userId, month, year, session) => {
   try {
-    const savingGoals = await SavingGoal.find({
+    const currentDate = new Date();
+    const savingGoals = await SavingGoal.find({ 
       maNguoiDung: userId,
-      ngayTao: {
-        $gte: new Date(year, month - 1, 1),
-        $lt: new Date(year, month, 1),
-      },
+      trangThai: 'Đang thực hiện'
     }).session(session);
 
-    for (const goal of savingGoals) {
-      const transactions = await Transaction.find({
-        maNguoiDung: userId,
-        loai: 'Thu nhập',
-        ngayGiaoDich: {
-          $gte: new Date(year, month - 1, 1),
-          $lt: new Date(year, month, 1),
-        },
-      }).session(session);
+    for (let goal of savingGoals) {
+      let statusChanged = false;
+      let notificationCreated = false;
 
-      const totalSaved = transactions.reduce((sum, t) => sum + (t.soTien || 0), 0) * 0.1; // Giả định tiết kiệm 10% thu nhập
-      goal.soTienDaTietKiem = totalSaved;
-      goal.trangThai = totalSaved >= goal.soTienMucTieu ? 'Hoàn thành' : 'Đang tiến hành';
-      await goal.save({ session });
+      // Kiểm tra quá hạn
+      if (goal.hanChot && new Date(goal.hanChot) < currentDate && goal.trangThai === 'Đang thực hiện') {
+        goal.trangThai = 'Thất bại';
+        await goal.save({ session });
+        
+        // Tạo thông báo quá hạn
+        const notification = new Notification({
+          maNguoiDung: userId,
+          noiDung: `Mục tiêu "${goal.tenMucTieu}" đã quá hạn và được đánh dấu là thất bại`,
+          loai: 'Cảnh báo',
+          quanTrong: true,
+          daDoc: false
+        });
+        await notification.save({ session });
+        
+        console.log(`Saving goal ${goal._id} marked as Thất bại (quá hạn)`);
+        console.log(`Notification created for user ${userId}`);
+        statusChanged = true;
+        notificationCreated = true;
+      }
 
-      console.log(`Updated saving goal ${goal._id} for user ${userId}, month ${month}/${year}`);
+      // Kiểm tra hoàn thành
+      if (goal.soTienHienTai >= goal.soTienMucTieu && goal.trangThai === 'Đang thực hiện') {
+        goal.trangThai = 'Hoàn thành';
+        await goal.save({ session });
+        
+        // Tạo thông báo hoàn thành
+        const notification = new Notification({
+          maNguoiDung: userId,
+          noiDung: `Chúc mừng! Mục tiêu "${goal.tenMucTieu}" đã được hoàn thành`,
+          loai: 'Cập nhật',
+          quanTrong: true,
+          daDoc: false
+        });
+        await notification.save({ session });
+        
+        console.log(`Saving goal ${goal._id} marked as Hoàn thành`);
+        console.log(`Notification created for user ${userId}`);
+        statusChanged = true;
+        notificationCreated = true;
+      }
+
+      if (notificationCreated) {
+        console.log(`Saving goal status update completed for user ${userId}`);
+      }
     }
   } catch (error) {
-    console.error(`Error updating saving goal for user ${userId}:`, error);
+    console.error('Error updating saving goal status:', error);
     throw error;
   }
 };
@@ -66,4 +97,38 @@ const updateSavingGoalStatusCron = () => {
   });
 };
 
-module.exports = updateSavingGoalStatusCron;
+// Hàm kiểm tra và tạo thông báo cho mục tiêu quá hạn ngay lập tức
+const checkOverdueSavingGoals = async () => {
+  try {
+    const currentDate = new Date();
+    const overdueGoals = await SavingGoal.find({
+      hanChot: { $lt: currentDate },
+      trangThai: 'Đang thực hiện'
+    });
+
+    for (const goal of overdueGoals) {
+      // Kiểm tra xem đã có thông báo quá hạn chưa
+      const existingNotification = await Notification.findOne({
+        maNguoiDung: goal.maNguoiDung,
+        noiDung: { $regex: `Mục tiêu ${goal.tenMucTieu}.*quá hạn`, $options: 'i' },
+        ngay: { $gte: new Date(currentDate.getTime() - 24 * 60 * 60 * 1000) } // Trong 24h qua
+      });
+
+      if (!existingNotification) {
+        const notification = new Notification({
+          maNguoiDung: goal.maNguoiDung,
+          noiDung: `Mục tiêu "${goal.tenMucTieu}" đã quá hạn! Cần hoàn thành ngay.`,
+          loai: 'Cảnh báo',
+          quanTrong: true,
+          daDoc: false
+        });
+        await notification.save();
+        console.log(`Đã tạo thông báo quá hạn cho mục tiêu: ${goal._id}`);
+      }
+    }
+  } catch (error) {
+    console.error('Lỗi khi kiểm tra mục tiêu quá hạn:', error);
+  }
+};
+
+module.exports = { updateSavingGoalStatus, updateSavingGoalStatusCron, checkOverdueSavingGoals };

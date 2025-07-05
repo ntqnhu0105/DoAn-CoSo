@@ -44,16 +44,22 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch(err => console.error('Lỗi kết nối MongoDB:', err));
 
 const updateBudgetStatus = require('./cron/updateBudgetStatus');
-const updateSavingGoalStatus = require('./cron/updateSavingGoalStatus');
+const { updateSavingGoalStatusCron } = require('./cron/updateSavingGoalStatus');
 const updateDebtStatus = require('./cron/updateDebtStatus');
 const { updateReport } = require('./cron/updateReport');
-const { startReminderCheck } = require('./cron/checkReminders');
+const { startReminderCheck, checkOverdueItems } = require('./cron/checkReminders');
 
 updateBudgetStatus();
-updateSavingGoalStatus();
+updateSavingGoalStatusCron();
 updateDebtStatus();
 updateReport();
 startReminderCheck();
+
+// Kiểm tra các đối tượng quá hạn ngay khi server khởi động
+setTimeout(() => {
+  console.log('Kiểm tra các đối tượng quá hạn khi khởi động server...');
+  checkOverdueItems();
+}, 5000); // Chờ 5 giây để đảm bảo database đã sẵn sàng
 
 app.use(passport.initialize());
 
